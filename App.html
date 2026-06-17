@@ -1,0 +1,760 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <title>PulseLift - Pro Workout Tracker</title>
+    <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link rel="manifest" href="manifest.json">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<link rel="apple-touch-icon" href="icon-192.png">
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            -webkit-tap-highlight-color: transparent;
+            background-color: #000000;
+        }
+        .safe-bottom {
+            padding-bottom: calc(env(safe-area-inset-bottom) + 5rem);
+        }
+        .hide-scrollbar::-webkit-scrollbar {
+            display: none;
+        }
+        .hide-scrollbar {
+            -ms-overflow-style: none;
+            scrollbar-width: none;
+        }
+    </style>
+</head>
+<body class="text-gray-100 min-h-screen flex flex-col justify-between select-none">
+
+    <header class="bg-neutral-900/80 backdrop-blur-md sticky top-0 z-40 border-b border-neutral-800 px-5 pt-12 pb-4 flex justify-between items-center">
+        <h1 id="page-title" class="text-2xl font-bold tracking-tight text-white">Dashboard</h1>
+        <span id="current-date-badge" class="text-xs bg-neutral-800 text-neutral-400 px-3 py-1 rounded-full font-medium"></span>
+    </header>
+
+    <main class="flex-1 overflow-y-auto px-4 pt-4 safe-bottom hide-scrollbar">
+        
+        <section id="tab-dashboard" class="space-y-6">
+            <div class="grid grid-cols-2 gap-3">
+                <div class="bg-neutral-900 p-4 rounded-2xl border border-neutral-800">
+                    <p class="text-xs text-neutral-400 font-medium uppercase tracking-wider">Last Workout</p>
+                    <p id="stat-last-workout" class="text-lg font-bold text-emerald-400 mt-1">None yet</p>
+                    <p id="stat-last-name" class="text-xs text-neutral-500 mt-0.5">Log your first session</p>
+                </div>
+                <div class="bg-neutral-900 p-4 rounded-2xl border border-neutral-800">
+                    <p class="text-xs text-neutral-400 font-medium uppercase tracking-wider">Next Workout Due</p>
+                    <p id="stat-next-workout" class="text-lg font-bold text-indigo-400 mt-1">Not Set</p>
+                    <p id="stat-today-status" class="text-xs text-neutral-500 mt-0.5">Set schedule in Rest Days</p>
+                </div>
+            </div>
+
+            <div class="bg-neutral-900 p-5 rounded-2xl border border-neutral-800 space-y-4">
+                <div class="flex justify-between items-center">
+                    <div>
+                        <h2 class="text-base font-semibold text-white">Consistency Map</h2>
+                        <p class="text-xs text-neutral-400">Tap past days to log rest/missed marks</p>
+                    </div>
+                    <div class="flex items-center gap-3">
+                        <button onclick="navigateMonth(-1)" class="text-neutral-400 hover:text-white p-1 text-sm"><i class="fa-solid fa-chevron-left"></i></button>
+                        <span class="text-sm font-bold text-neutral-200 min-w-[80px] text-center" id="map-month-year"></span>
+                        <button onclick="navigateMonth(1)" class="text-neutral-400 hover:text-white p-1 text-sm"><i class="fa-solid fa-chevron-right"></i></button>
+                    </div>
+                </div>
+                
+                <div class="grid grid-cols-7 gap-2 text-center text-[11px] font-bold text-neutral-500">
+                    <div>M</div><div>T</div><div>W</div><div>T</div><div>F</div><div>S</div><div>S</div>
+                </div>
+                
+                <div id="calendar-grid" class="grid grid-cols-7 gap-2"></div>
+
+                <div class="flex justify-between items-center pt-3 border-t border-neutral-800 text-[11px] text-neutral-400">
+                    <div class="flex items-center gap-1">
+                        <div class="w-2.5 h-2.5 rounded-full bg-emerald-500"></div> Workout
+                    </div>
+                    <div class="flex items-center gap-1">
+                        <i class="fa-solid fa-moon text-emerald-400 text-[10px]"></i> Rest Day
+                    </div>
+                    <div class="flex items-center gap-1">
+                        <div class="w-2.5 h-2.5 rounded-full bg-rose-600"></div> Missed
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section id="tab-workout" class="hidden space-y-6">
+            <div id="workout-active-view" class="hidden space-y-4">
+                <div class="flex justify-between items-center bg-neutral-900 p-4 rounded-xl border border-neutral-800">
+                    <div>
+                        <h3 id="active-template-title" class="text-lg font-bold text-white">Active Routine</h3>
+                        <p id="active-timer" class="text-xs text-indigo-400 font-mono">Duration: 00:00</p>
+                    </div>
+                    <button onclick="finishCurrentWorkoutSession()" class="bg-emerald-500 text-black px-4 py-2 rounded-xl text-sm font-bold active:scale-95 transition-transform">
+                        Complete Session
+                    </button>
+                </div>
+                <div id="active-exercises-list" class="space-y-4"></div>
+            </div>
+
+            <div id="workout-list-view" class="space-y-4">
+                <div class="flex justify-between items-center">
+                    <h2 class="text-lg font-bold text-white">Routines & Templates</h2>
+                    <button onclick="openTemplateEditor()" class="bg-neutral-900 text-indigo-400 border border-neutral-800 px-3 py-1.5 rounded-xl text-xs font-semibold flex items-center gap-1.5">
+                        <i class="fa-solid fa-plus"></i> New Template
+                    </button>
+                </div>
+                <div id="templates-container" class="space-y-3"></div>
+            </div>
+
+            <div id="workout-edit-view" class="hidden bg-neutral-900 p-5 rounded-2xl border border-neutral-800 space-y-4">
+                <h3 id="editor-view-title" class="text-lg font-bold text-white">Build Template</h3>
+                <div>
+                    <label class="text-xs font-semibold text-neutral-400 block mb-1">Routine Label Name</label>
+                    <input id="edit-template-name" type="text" placeholder="e.g., Upper Body Split A" class="w-full bg-neutral-950 border border-neutral-800 rounded-xl px-4 py-3 text-sm text-white focus:outline-none focus:border-indigo-500">
+                </div>
+                <div class="space-y-2">
+                    <label class="text-xs font-semibold text-neutral-400 block">Exercise Progression Steps</label>
+                    <div id="editor-exercises-list" class="space-y-2"></div>
+                    <button onclick="addExerciseFieldToEditor('')" class="w-full bg-neutral-950 border border-dashed border-neutral-700 text-neutral-400 py-2.5 rounded-xl text-xs font-medium mt-1">
+                        <i class="fa-solid fa-plus mr-1"></i> Add Exercise Movement
+                    </button>
+                </div>
+                <div class="flex gap-2 pt-4 border-t border-neutral-800">
+                    <button onclick="cancelTemplateEditing()" class="flex-1 bg-neutral-800 text-neutral-300 py-3 rounded-xl text-sm font-semibold">Cancel</button>
+                    <button onclick="saveTemplateFromEditor()" class="flex-1 bg-indigo-600 text-white py-3 rounded-xl text-sm font-semibold shadow-lg active:scale-95 transition-transform">Save Template</button>
+                </div>
+            </div>
+        </section>
+
+        <section id="tab-analytics" class="hidden space-y-5">
+            <div class="bg-neutral-900 p-4 rounded-2xl border border-neutral-800 space-y-4">
+                <div>
+                    <h2 class="text-base font-semibold text-white">Performance Analytics</h2>
+                    <p class="text-xs text-neutral-400">Track heavy set value timelines across recorded history</p>
+                </div>
+                <div class="grid grid-cols-2 gap-2">
+                    <div>
+                        <label class="text-[10px] uppercase font-bold tracking-wider text-neutral-500 block mb-1">Select Routine</label>
+                        <select id="analytics-template-select" onchange="populateAnalyticsExerciseDropdown()" class="w-full bg-neutral-950 border border-neutral-800 rounded-xl px-3 py-2 text-xs text-white focus:outline-none"></select>
+                    </div>
+                    <div>
+                        <label class="text-[10px] uppercase font-bold tracking-wider text-neutral-500 block mb-1">Select Exercise</label>
+                        <select id="analytics-exercise-select" onchange="updateAnalyticsChart()" class="w-full bg-neutral-950 border border-neutral-800 rounded-xl px-3 py-2 text-xs text-white focus:outline-none"></select>
+                    </div>
+                </div>
+            </div>
+
+            <div class="bg-neutral-900 p-4 rounded-2xl border border-neutral-800 relative h-64 flex justify-center items-center">
+                <div id="analytics-empty-state" class="text-xs text-neutral-500 absolute">Log completed history profiles to generate graph data.</div>
+                <canvas id="performanceChart" class="w-full h-full hidden"></canvas>
+            </div>
+
+            <div class="bg-neutral-900 p-4 rounded-2xl border border-neutral-800 space-y-3">
+                <h3 class="text-sm font-bold text-white">Timeline Increments</h3>
+                <div id="analytics-logs-history" class="space-y-2 text-xs divide-y divide-neutral-800"></div>
+            </div>
+        </section>
+
+        <section id="tab-rest" class="hidden space-y-5">
+            <div class="bg-neutral-900 p-5 rounded-2xl border border-neutral-800 space-y-3">
+                <div>
+                    <h2 class="text-base font-semibold text-white">Planned Rest Days</h2>
+                    <p class="text-xs text-neutral-400">Configure weeks to precisely calculate dynamic target workout deadlines.</p>
+                </div>
+                <hr class="border-neutral-800">
+                <div id="rest-days-selectors-container" class="space-y-2 pt-2">
+                    </div>
+            </div>
+        </section>
+
+    </main>
+
+    <nav class="bg-neutral-900/90 backdrop-blur-md border-t border-neutral-800 fixed bottom-0 left-0 right-0 z-50 px-4 pt-2 pb-6 flex justify-between items-center">
+        <button onclick="switchTab('dashboard')" id="nav-dashboard" class="flex flex-col items-center flex-1 space-y-1 text-indigo-400">
+            <i class="fa-solid fa-calendar-alt text-lg"></i>
+            <span class="text-[9px] font-semibold tracking-wide">Dashboard</span>
+        </button>
+        <button onclick="switchTab('workout')" id="nav-workout" class="flex flex-col items-center flex-1 space-y-1 text-neutral-500">
+            <i class="fa-solid fa-dumbbell text-lg"></i>
+            <span class="text-[9px] font-semibold tracking-wide">Workout</span>
+        </button>
+        <button onclick="switchTab('analytics')" id="nav-analytics" class="flex flex-col items-center flex-1 space-y-1 text-neutral-500">
+            <i class="fa-solid fa-chart-line text-lg"></i>
+            <span class="text-[9px] font-semibold tracking-wide">Analytics</span>
+        </button>
+        <button onclick="switchTab('rest')" id="nav-rest" class="flex flex-col items-center flex-1 space-y-1 text-neutral-500">
+            <i class="fa-solid fa-moon text-lg"></i>
+            <span class="text-[9px] font-semibold tracking-wide">Rest Days</span>
+        </button>
+    </nav>
+
+    <script>
+        // --- SECURE EMPTY BASE APPLICATION DATABASE STATE SCHEMA ---
+        let appState = {
+            templates: [],
+            history: [],
+            dayOverrides: {}, // Formats target entries explicitly: {"YYYY-MM-DD": "rest" | "missed"}
+            restDays: [0, 6], // Standard indices tracking (0=Sunday, 6=Saturday etc.)
+            currentActiveWorkout: null
+        };
+
+        const weekDayNames = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
+        let activeTimerInterval = null;
+        let chartInstance = null;
+        
+        // Navigation Context Variables For Interactive Calendar
+        let navDate = new Date();
+
+        function initApp() {
+            const cachedData = localStorage.getItem('pulseLift_v2_clean_data');
+            if (cachedData) {
+                appState = JSON.parse(cachedData);
+            } else {
+                saveToLocalStorage();
+            }
+
+            // Sync Header Date Label Elements
+            document.getElementById('current-date-badge').innerText = new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+            
+            renderDashboard();
+            renderRestDaysConfigTab();
+        }
+
+        function saveToLocalStorage() {
+            localStorage.setItem('pulseLift_v2_clean_data', JSON.stringify(appState));
+        }
+
+        // --- GLOBAL NAVIGATION CONTROLLER ---
+        function switchTab(targetTab) {
+            ['dashboard', 'workout', 'analytics', 'rest'].forEach(tab => {
+                document.getElementById(`tab-${tab}`).classList.add('hidden');
+                document.getElementById(`nav-${tab}`).classList.remove('text-indigo-400');
+                document.getElementById(`nav-${tab}`).classList.add('text-neutral-500');
+            });
+
+            document.getElementById(`tab-${targetTab}`).classList.remove('hidden');
+            document.getElementById(`nav-${targetTab}`).classList.add('text-indigo-400');
+            document.getElementById(`nav-${targetTab}`).classList.remove('text-neutral-500');
+
+            const titles = { 'dashboard': 'Dashboard', 'workout': 'Workout Log', 'analytics': 'Analytics Hub', 'rest': 'Rest Schedule' };
+            document.getElementById('page-title').innerText = titles[targetTab];
+
+            if (targetTab === 'dashboard') renderDashboard();
+            if (targetTab === 'workout') renderTemplateList();
+            if (targetTab === 'analytics') setupAnalyticsContexts();
+            if (targetTab === 'rest') renderRestDaysConfigTab();
+        }
+
+        // --- TAB 1: DASHBOARD & DYNAMIC CONSISTENCY TRACKER ---
+        function renderDashboard() {
+            const gridContainer = document.getElementById('calendar-grid');
+            gridContainer.innerHTML = '';
+
+            // Compute dynamic metrics targeting exact log arrays
+            if (appState.history.length > 0) {
+                const sortedHistory = [...appState.history].sort((a, b) => new Date(b.date) - new Date(a.date));
+                const lastLog = sortedHistory[0];
+                document.getElementById('stat-last-workout').innerText = formatDaysAgo(new Date(lastLog.date));
+                document.getElementById('stat-last-name').innerText = lastLog.templateName;
+            } else {
+                document.getElementById('stat-last-workout').innerText = "None recorded";
+                document.getElementById('stat-last-name').innerText = "Create & start a layout template";
+            }
+
+            // Next Workout Target Calculation Logic Arrays
+            const todayIndex = new Date().getDay();
+            const isTodayRest = appState.restDays.includes(todayIndex);
+            document.getElementById('stat-today-status').innerText = isTodayRest ? "Scheduled Rest Today" : "Workout Scheduled Today";
+
+            let nextDueStr = "No Active Schedule";
+            if (appState.restDays.length < 7) {
+                for (let i = 1; i <= 7; i++) {
+                    let futureCheck = new Date();
+                    futureCheck.setDate(new Date().getDate() + i);
+                    if (!appState.restDays.includes(futureCheck.getDay())) {
+                        if (i === 1) nextDueStr = "Tomorrow";
+                        else if (i === 2) nextDueStr = "In 2 days";
+                        else nextDueStr = futureCheck.toLocaleDateString('en-US', { weekday: 'long' });
+                        break;
+                    }
+                }
+            }
+            document.getElementById('stat-next-workout').innerText = nextDueStr;
+
+            // Render Dynamic Interactive Month Matrix Layout
+            const targetYear = navDate.getFullYear();
+            const targetMonth = navDate.getMonth();
+            
+            document.getElementById('map-month-year').innerText = navDate.toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
+
+            const daysInMonth = new Date(targetYear, targetMonth + 1, 0).getDate();
+            const firstDayIndex = new Date(targetYear, targetMonth, 1).getDay();
+            const shiftedStart = firstDayIndex === 0 ? 6 : firstDayIndex - 1; // Shifts matching Monday start
+
+            for (let i = 0; i < shiftedStart; i++) {
+                gridContainer.appendChild(document.createElement('div'));
+            }
+
+            const todayFormattedStr = new Date().toISOString().split('T')[0];
+
+            for (let day = 1; day <= daysInMonth; day++) {
+                const paddedDay = day < 10 ? `0${day}` : day;
+                const paddedMonth = (targetMonth + 1) < 10 ? `0${(targetMonth + 1)}` : (targetMonth + 1);
+                const loopingDateString = `${targetYear}-${paddedMonth}-${paddedDay}`;
+
+                const cellBlock = document.createElement('div');
+                cellBlock.className = "aspect-square rounded-lg flex items-center justify-center text-xs font-bold transition-all active:scale-90 cursor-pointer ";
+                cellBlock.innerText = day;
+
+                // Match layout rules priorities
+                const hasSessionWorkout = appState.history.some(log => log.date === loopingDateString);
+                const customOverride = appState.dayOverrides[loopingDateString];
+
+                if (hasSessionWorkout) {
+                    cellBlock.className += "bg-emerald-500 text-black shadow-sm shadow-emerald-500/30";
+                } else if (customOverride === 'rest') {
+                    cellBlock.className += "bg-emerald-950 text-emerald-400 border border-emerald-500/30";
+                } else if (customOverride === 'missed') {
+                    cellBlock.className += "bg-rose-600 text-white";
+                } else {
+                    cellBlock.className += "bg-neutral-800 text-neutral-500";
+                }
+
+                // Bind interactive tap mechanics directly to element row
+                cellBlock.onclick = () => cycleDayOverrideState(loopingDateString, hasSessionWorkout);
+                gridContainer.appendChild(cellBlock);
+            }
+        }
+
+        function navigateMonth(direction) {
+            navDate.setMonth(navDate.getMonth() + direction);
+            renderDashboard();
+        }
+
+        function cycleDayOverrideState(dateStr, hasWorkout) {
+            // Completed logged sessions auto-fetch lock configuration validation rules check
+            if (hasWorkout) {
+                alert("This day contains a completed workout session log and cannot be manually overridden.");
+                return;
+            }
+
+            const current = appState.dayOverrides[dateStr];
+            if (!current) {
+                appState.dayOverrides[dateStr] = 'rest';
+            } else if (current === 'rest') {
+                appState.dayOverrides[dateStr] = 'missed';
+            } else {
+                delete appState.dayOverrides[dateStr];
+            }
+            saveToLocalStorage();
+            renderDashboard();
+        }
+
+        function formatDaysAgo(dateObj) {
+            const today = new Date();
+            today.setHours(0,0,0,0);
+            dateObj.setHours(0,0,0,0);
+            const diffTime = Math.abs(today - dateObj);
+            const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+            if (diffDays === 0) return "Today";
+            if (diffDays === 1) return "Yesterday";
+            return `${diffDays} days ago`;
+        }
+
+        // --- TAB 2: WORKOUT WORKFLOW COMPONENT CORE ---
+        function renderTemplateList() {
+            const container = document.getElementById('templates-container');
+            container.innerHTML = '';
+
+            if (appState.currentActiveWorkout) {
+                document.getElementById('workout-active-view').classList.remove('hidden');
+                document.getElementById('workout-list-view').classList.add('hidden');
+                renderActiveWorkoutScreen();
+                return;
+            }
+
+            document.getElementById('workout-active-view').classList.add('hidden');
+            document.getElementById('workout-list-view').classList.remove('hidden');
+
+            if (appState.templates.length === 0) {
+                container.innerHTML = `
+                    <div class="text-center py-8 text-neutral-500 text-xs border border-dashed border-neutral-800 rounded-2xl">
+                        No custom templates found. Tap 'New Template' above to add your routines.
+                    </div>`;
+                return;
+            }
+
+            appState.templates.forEach(tmpl => {
+                const card = document.createElement('div');
+                card.className = "bg-neutral-900 p-4 rounded-2xl border border-neutral-800 flex justify-between items-center";
+                card.innerHTML = `
+                    <div class="space-y-1 pr-2 max-w-[70%]">
+                        <h3 class="font-bold text-white text-base truncate">${tmpl.name}</h3>
+                        <p class="text-xs text-neutral-400 truncate">${tmpl.exercises.join(', ')}</p>
+                    </div>
+                    <div class="flex gap-1.5">
+                        <button onclick="openTemplateEditor('${tmpl.id}')" class="p-2.5 bg-neutral-800 rounded-xl text-xs text-neutral-400"><i class="fa-solid fa-pen"></i></button>
+                        <button onclick="startWorkoutSession('${tmpl.id}')" class="px-4 py-2 bg-indigo-600 text-white font-bold text-xs rounded-xl shadow-md">Start</button>
+                    </div>
+                `;
+                container.appendChild(card);
+            });
+        }
+
+        let activeEditingTemplateId = null;
+
+        function openTemplateEditor(templateId = null) {
+            activeEditingTemplateId = templateId;
+            document.getElementById('workout-list-view').classList.add('hidden');
+            document.getElementById('workout-edit-view').classList.remove('hidden');
+            const listContainer = document.getElementById('editor-exercises-list');
+            listContainer.innerHTML = '';
+
+            if (templateId) {
+                document.getElementById('editor-view-title').innerText = "Modify Routine Template";
+                const tmpl = appState.templates.find(t => t.id === templateId);
+                document.getElementById('edit-template-name').value = tmpl.name;
+                tmpl.exercises.forEach(ex => addExerciseFieldToEditor(ex));
+            } else {
+                document.getElementById('editor-view-title').innerText = "Create New Template";
+                document.getElementById('edit-template-name').value = '';
+                addExerciseFieldToEditor('');
+            }
+        }
+
+        function addExerciseFieldToEditor(val = '') {
+            const listContainer = document.getElementById('editor-exercises-list');
+            const row = document.createElement('div');
+            row.className = "flex gap-2 items-center";
+            row.innerHTML = `
+                <input type="text" value="${val}" placeholder="Movement/Exercise Name" class="flex-1 exercise-input-item bg-neutral-950 border border-neutral-800 rounded-xl px-3 py-2.5 text-xs text-white focus:outline-none">
+                <button onclick="this.parentElement.remove()" class="p-2.5 text-rose-500 bg-neutral-950 border border-neutral-800 rounded-xl"><i class="fa-solid fa-trash"></i></button>
+            `;
+            listContainer.appendChild(row);
+        }
+
+        function cancelTemplateEditing() {
+            document.getElementById('workout-edit-view').classList.add('hidden');
+            document.getElementById('workout-list-view').classList.remove('hidden');
+            activeEditingTemplateId = null;
+        }
+
+        function saveTemplateFromEditor() {
+            const name = document.getElementById('edit-template-name').value.trim();
+            if (!name) return alert('Template name string required.');
+
+            const inputs = document.querySelectorAll('.exercise-input-item');
+            const exercisesArr = [];
+            inputs.forEach(el => {
+                if (el.value.trim()) exercisesArr.push(el.value.trim());
+            });
+
+            if (exercisesArr.length === 0) return alert('Please input at least one exercise line item.');
+
+            if (activeEditingTemplateId) {
+                const tmpl = appState.templates.find(t => t.id === activeEditingTemplateId);
+                tmpl.name = name;
+                tmpl.exercises = exercisesArr;
+            } else {
+                appState.templates.push({ id: 'tmpl_' + Date.now(), name: name, exercises: exercisesArr });
+            }
+
+            saveToLocalStorage();
+            cancelTemplateEditing();
+            renderTemplateList();
+        }
+
+        // --- SESSION WORKOUT LOGGER UTILITIES ---
+        function startWorkoutSession(templateId) {
+            const template = appState.templates.find(t => t.id === templateId);
+            appState.currentActiveWorkout = {
+                templateId: template.id,
+                templateName: template.name,
+                startTime: Date.now(),
+                exercises: {}
+            };
+
+            template.exercises.forEach(ex => {
+                appState.currentActiveWorkout.exercises[ex] = [{ weight: '', reps: '', completed: false }];
+            });
+
+            saveToLocalStorage();
+            renderTemplateList();
+            startSessionTimer();
+        }
+
+        function startSessionTimer() {
+            if (activeTimerInterval) clearInterval(activeTimerInterval);
+            const timerLabel = document.getElementById('active-timer');
+            activeTimerInterval = setInterval(() => {
+                if (!appState.currentActiveWorkout) return clearInterval(activeTimerInterval);
+                const elapsed = Math.floor((Date.now() - appState.currentActiveWorkout.startTime) / 1000);
+                const mins = String(Math.floor(elapsed / 60)).padStart(2, '0');
+                const secs = String(elapsed % 60).padStart(2, '0');
+                timerLabel.innerText = `Duration: ${mins}:${secs}`;
+            }, 1000);
+        }
+
+        function renderActiveWorkoutScreen() {
+            const activeWk = appState.currentActiveWorkout;
+            document.getElementById('active-template-title').innerText = activeWk.templateName;
+            const container = document.getElementById('active-exercises-list');
+            container.innerHTML = '';
+
+            const historicalData = getHistoricalRecordsForTemplate(activeWk.templateId);
+
+            Object.keys(activeWk.exercises).forEach(exName => {
+                const prevPerformanceInfo = historicalData[exName] || "No baseline tracked yet";
+
+                const block = document.createElement('div');
+                block.className = "bg-neutral-900 rounded-2xl border border-neutral-800 p-4 space-y-3";
+                block.innerHTML = `
+                    <div>
+                        <h4 class="font-bold text-white text-sm">${exName}</h4>
+                        <p class="text-[11px] text-indigo-400 mt-0.5 font-medium"><i class="fa-solid fa-trophy mr-1"></i>Prev: ${prevPerformanceInfo}</p>
+                    </div>
+                    <div class="grid grid-cols-4 gap-2 text-center text-[10px] font-bold text-neutral-500 uppercase tracking-wider">
+                        <div>Set</div><div>kg</div><div>Reps</div><div>Log</div>
+                    </div>
+                    <div id="set-rows-${btoa(exName).replace(/=/g, '')}" class="space-y-2"></div>
+                    <button onclick="addSetRowToActiveExercise('${exName}')" class="w-full bg-neutral-950 text-neutral-400 py-1.5 rounded-xl text-xs font-semibold border border-neutral-800">+ Add Performance Set</button>
+                `;
+                container.appendChild(block);
+                renderActiveSetRows(exName);
+            });
+        }
+
+        function renderActiveSetRows(exName) {
+            const hashKey = btoa(exName).replace(/=/g, '');
+            const rowsContainer = document.getElementById(`set-rows-${hashKey}`);
+            rowsContainer.innerHTML = '';
+
+            const setsList = appState.currentActiveWorkout.exercises[exName];
+            setsList.forEach((set, index) => {
+                const row = document.createElement('div');
+                row.className = `grid grid-cols-4 gap-2 items-center text-center py-1 rounded-xl transition-colors ${set.completed ? 'bg-emerald-950/20' : ''}`;
+                row.innerHTML = `
+                    <span class="text-xs font-bold text-neutral-400">${index + 1}</span>
+                    <input type="number" step="any" value="${set.weight}" placeholder="0" onchange="updateSetData('${exName}', ${index}, 'weight', this.value)" ${set.completed ? 'disabled' : ''} class="bg-neutral-950 border border-neutral-800 rounded-lg py-1.5 text-center text-xs text-white focus:outline-none focus:border-indigo-500 disabled:opacity-50">
+                    <input type="number" value="${set.reps}" placeholder="0" onchange="updateSetData('${exName}', ${index}, 'reps', this.value)" ${set.completed ? 'disabled' : ''} class="bg-neutral-950 border border-neutral-800 rounded-lg py-1.5 text-center text-xs text-white focus:outline-none focus:border-indigo-500 disabled:opacity-50">
+                    <button onclick="toggleSetCompletion('${exName}', ${index})" class="p-1.5 rounded-lg text-xs font-bold transition-all ${set.completed ? 'bg-emerald-500 text-black' : 'bg-neutral-800 text-neutral-400'}">
+                        <i class="fa-solid ${set.completed ? 'fa-check' : 'fa-circle-notch'}"></i>
+                    </button>
+                `;
+                rowsContainer.appendChild(row);
+            });
+        }
+
+        function updateSetData(exName, index, field, val) {
+            appState.currentActiveWorkout.exercises[exName][index][field] = val;
+            saveToLocalStorage();
+        }
+
+        function toggleSetCompletion(exName, index) {
+            const set = appState.currentActiveWorkout.exercises[exName][index];
+            if (!set.weight || !set.reps) return alert("Please fill out metrics tracking boxes first.");
+            set.completed = !set.completed;
+            saveToLocalStorage();
+            renderActiveSetRows(exName);
+        }
+
+        function addSetRowToActiveExercise(exName) {
+            appState.currentActiveWorkout.exercises[exName].push({ weight: '', reps: '', completed: false });
+            saveToLocalStorage();
+            renderActiveSetRows(exName);
+        }
+
+        function getHistoricalRecordsForTemplate(templateId) {
+            const recordsMap = {};
+            const historyFilter = appState.history.filter(h => h.templateId === templateId);
+            if (historyFilter.length === 0) return recordsMap;
+
+            const finalLog = historyFilter[historyFilter.length - 1];
+            Object.keys(finalLog.exercises).forEach(exName => {
+                recordsMap[exName] = finalLog.exercises[exName].map(s => `${s.weight}kg x ${s.reps}`).join(' | ');
+            });
+            return recordsMap;
+        }
+
+        function finishCurrentWorkoutSession() {
+            const activeWk = appState.currentActiveWorkout;
+            const logEntry = {
+                id: 'log_' + Date.now(),
+                templateId: activeWk.templateId,
+                templateName: activeWk.templateName,
+                date: new Date().toISOString().split('T')[0], // Sets to today's date
+                exercises: {}
+            };
+
+            let setsCount = 0;
+            Object.keys(activeWk.exercises).forEach(exName => {
+                const completeSets = activeWk.exercises[exName].filter(s => s.completed && s.weight && s.reps);
+                if (completeSets.length > 0) {
+                    logEntry.exercises[exName] = completeSets.map(s => ({ weight: parseFloat(s.weight), reps: parseInt(s.reps) }));
+                    setsCount++;
+                }
+            });
+
+            if (setsCount === 0) {
+                if (!confirm("No completed performance sets recorded. Discard this session?")) return;
+            } else {
+                appState.history.push(logEntry);
+                
+                // Clear any manual override flags for today to allow the session data to fetch cleanly
+                delete appState.dayOverrides[logEntry.date];
+            }
+
+            appState.currentActiveWorkout = null;
+            if (activeTimerInterval) clearInterval(activeTimerInterval);
+            saveToLocalStorage();
+            renderTemplateList();
+        }
+
+        // --- TAB 3: CLEAN WORKING ANALYTICS CONTROLLER ---
+        function setupAnalyticsContexts() {
+            const tmplSelect = document.getElementById('analytics-template-select');
+            tmplSelect.innerHTML = '';
+
+            if (appState.templates.length === 0) {
+                if(chartInstance) chartInstance.destroy();
+                document.getElementById('analytics-empty-state').classList.remove('hidden');
+                document.getElementById('performanceChart').classList.add('hidden');
+                document.getElementById('analytics-logs-history').innerHTML = '';
+                return;
+            }
+
+            appState.templates.forEach(t => {
+                const optionItem = document.createElement('option');
+                optionItem.value = t.id;
+                optionItem.innerText = t.name;
+                tmplSelect.appendChild(optionItem);
+            });
+
+            populateAnalyticsExerciseDropdown();
+        }
+
+        function populateAnalyticsExerciseDropdown() {
+            const id = document.getElementById('analytics-template-select').value;
+            const exSelect = document.getElementById('analytics-exercise-select');
+            exSelect.innerHTML = '';
+
+            const selectedTmpl = appState.templates.find(t => t.id === id);
+            if (!selectedTmpl) return;
+
+            selectedTmpl.exercises.forEach(ex => {
+                const opt = document.createElement('option');
+                opt.value = ex;
+                opt.innerText = ex;
+                exSelect.appendChild(opt);
+            });
+
+            updateAnalyticsChart();
+        }
+
+        function updateAnalyticsChart() {
+            const tId = document.getElementById('analytics-template-select').value;
+            const exName = document.getElementById('analytics-exercise-select').value;
+            const historyContainer = document.getElementById('analytics-logs-history');
+            historyContainer.innerHTML = '';
+
+            const matchedLogs = appState.history.filter(h => h.templateId === tId && h.exercises[exName]);
+
+            if (matchedLogs.length === 0) {
+                if (chartInstance) chartInstance.destroy();
+                document.getElementById('analytics-empty-state').classList.remove('hidden');
+                document.getElementById('performanceChart').classList.add('hidden');
+                historyContainer.innerHTML = `<p class="text-neutral-500 pt-2 text-center">No structural logs found for this tracking node profile.</p>`;
+                return;
+            }
+
+            document.getElementById('analytics-empty-state').classList.add('hidden');
+            document.getElementById('performanceChart').classList.remove('hidden');
+
+            const labels = [];
+            const coordinates = [];
+
+            matchedLogs.forEach(log => {
+                const weights = log.exercises[exName].map(s => s.weight);
+                const max = Math.max(...weights);
+                labels.push(new Date(log.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }));
+                coordinates.push(max);
+
+                const row = document.createElement('div');
+                row.className = "flex justify-between items-center py-2 text-neutral-300";
+                row.innerHTML = `
+                    <span class="font-medium">${new Date(log.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}</span>
+                    <span class="text-indigo-400 font-mono font-bold">${log.exercises[exName].map(s => `${s.weight}kg x ${s.reps}`).join(' | ')}</span>
+                `;
+                historyContainer.appendChild(row);
+            });
+
+            const ctx = document.getElementById('performanceChart').getContext('2d');
+            if (chartInstance) chartInstance.destroy();
+
+            chartInstance = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        data: coordinates,
+                        borderColor: '#6366f1',
+                        backgroundColor: 'rgba(99, 102, 241, 0.05)',
+                        borderWidth: 3,
+                        tension: 0.2,
+                        fill: true,
+                        pointBackgroundColor: '#ffffff'
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: { legend: { display: false } },
+                    scales: {
+                        x: { grid: { color: '#262626' }, ticks: { color: '#a3a3a3', font: { size: 10 } } },
+                        y: { grid: { color: '#262626' }, ticks: { color: '#a3a3a3', font: { size: 10 } } }
+                    }
+                }
+            });
+        }
+
+        // --- TAB 4: SCHEDULE MANAGEMENT COMPONENT ENGINE ---
+        function renderRestDaysConfigTab() {
+            const container = document.getElementById('rest-days-selectors-container');
+            container.innerHTML = '';
+
+            // Map structural items array sequentially starting from Monday -> Sunday
+            const trackingOrderArr = [1, 2, 3, 4, 5, 6, 0];
+
+            trackingOrderArr.forEach(dayIdx => {
+                const dayName = weekDayNames[dayIdx];
+                const isRestDayChecked = appState.restDays.includes(dayIdx);
+
+                const optionElementRow = document.createElement('div');
+                optionElementRow.className = "flex justify-between items-center bg-neutral-950 p-4 rounded-xl border border-neutral-800 active:bg-neutral-900 transition-colors";
+                optionElementRow.innerHTML = `
+                    <span class="text-sm font-semibold text-neutral-200">${dayName}</span>
+                    <button onclick="toggleRestDayConfigSchedule(${dayIdx})" class="w-12 h-6 flex items-center rounded-full p-0.5 transition-colors duration-200 focus:outline-none ${isRestDayChecked ? 'bg-emerald-500 justify-end' : 'bg-neutral-800 justify-start'}">
+                        <span class="bg-white w-5 h-5 rounded-full shadow-md transform duration-200"></span>
+                    </button>
+                `;
+                container.appendChild(optionElementRow);
+            });
+        }
+
+        function toggleRestDayConfigSchedule(dayIdx) {
+            if (appState.restDays.includes(dayIdx)) {
+                appState.restDays = appState.restDays.filter(d => d !== dayIdx);
+            } else {
+                appState.restDays.push(dayIdx);
+            }
+            saveToLocalStorage();
+            renderRestDaysConfigTab();
+        }
+
+        window.onload = initApp;
+    </script>
+</body>
+</html>
