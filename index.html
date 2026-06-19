@@ -4,11 +4,9 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover">
     <title>PulseLift - Pro Workout Tracker</title>
-    <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4">
-    </script>
+    <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <script src="https://cdn.jsdelivr.net/npm/chart.js">
-    </script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
         body {
             font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
@@ -25,17 +23,14 @@
             -ms-overflow-style: none;
             scrollbar-width: none;
         }
-        .collapsible-content {
-            max-height: 0;
-            overflow: hidden;
-            transition: max-height 0.35s ease-out;
+        /* Hide default number input arrows */
+        input[type=number]::-webkit-inner-spin-button, 
+        input[type=number]::-webkit-outer-spin-button { 
+            -webkit-appearance: none; 
+            margin: 0; 
         }
-        .collapsible-content.open {
-            max-height: 1200px;
-            transition: max-height 0.5s ease-in;
-        }
-        .rotate-180 {
-            transform: rotate(180deg);
+        input[type=number] {
+            -moz-appearance: textfield; 
         }
     </style>
 </head>
@@ -47,10 +42,8 @@
     </header>
 
     <main class="flex-1 overflow-y-auto px-4 pt-4 safe-bottom hide-scrollbar">
-
-        <!-- ===== DASHBOARD TAB ===== -->
+        
         <section id="tab-dashboard" class="space-y-6">
-            <!-- Stats Grid -->
             <div class="grid grid-cols-2 gap-3">
                 <div class="bg-neutral-900 p-4 rounded-2xl border border-neutral-800">
                     <p class="text-[10px] text-neutral-400 font-bold uppercase tracking-wider">Last Workout</p>
@@ -65,7 +58,6 @@
                 </div>
             </div>
 
-            <!-- Consistency Map -->
             <div class="bg-neutral-900 p-5 rounded-2xl border border-neutral-800 space-y-4">
                 <div class="flex justify-between items-center">
                     <div>
@@ -88,28 +80,21 @@
                 </div>
             </div>
 
-            <!-- Workout History (Collapsible) -->
             <div class="bg-neutral-900 rounded-2xl border border-neutral-800 overflow-hidden">
-                <div onclick="toggleWorkoutHistory()" class="flex justify-between items-center p-5 cursor-pointer select-none hover:bg-neutral-800/30 transition-colors">
-                    <div>
+                <button onclick="toggleWorkoutHistory()" class="w-full flex justify-between items-center p-5 focus:outline-none">
+                    <div class="text-left">
                         <h2 class="text-base font-semibold text-white">Workout History</h2>
-                        <p class="text-xs text-neutral-400">Detailed timeline of past completed sessions.</p>
+                        <p class="text-xs text-neutral-400 mt-0.5">Timeline of past sessions</p>
                     </div>
-                    <span id="history-toggle-icon" class="text-neutral-400 transition-transform duration-300">
-                        <i class="fa-solid fa-chevron-down"></i>
-                    </span>
-                </div>
-                <div id="workout-history-collapsible" class="collapsible-content open">
-                    <div class="px-5 pb-5 pt-1 border-t border-neutral-800">
-                        <div id="dashboard-history-list" class="space-y-2 max-h-80 overflow-y-auto pr-1 hide-scrollbar">
-                            <!-- populated by renderDashboardWorkoutHistory() -->
+                    <i id="history-chevron" class="fa-solid fa-chevron-down text-neutral-500 transition-transform"></i>
+                </button>
+                <div id="dashboard-history-content" class="hidden px-5 pb-5 pt-1 border-t border-neutral-800/50">
+                    <div id="dashboard-history-list" class="space-y-2 mt-2">
                         </div>
-                    </div>
                 </div>
             </div>
         </section>
 
-        <!-- ===== WORKOUT TAB ===== -->
         <section id="tab-workout" class="hidden space-y-6">
             <div id="workout-active-view" class="hidden space-y-4">
                 <div class="flex flex-col bg-neutral-900 p-4 rounded-xl border border-neutral-800 space-y-3">
@@ -157,7 +142,6 @@
             </div>
         </section>
 
-        <!-- ===== ANALYTICS TAB ===== -->
         <section id="tab-analytics" class="hidden space-y-5">
             <div class="bg-neutral-900 p-4 rounded-2xl border border-neutral-800 space-y-4">
                 <div>
@@ -169,11 +153,12 @@
                     <select id="analytics-template-select" onchange="updateAnalyticsChart()" class="w-full bg-neutral-950 border border-neutral-800 rounded-xl px-3 py-2.5 text-xs text-white focus:outline-none"></select>
                 </div>
             </div>
+
             <div id="analytics-empty-state" class="text-xs text-neutral-500 text-center py-6">Log completed history profiles to generate graph data.</div>
+            
             <div id="analytics-charts-container" class="space-y-4"></div>
         </section>
 
-        <!-- ===== REST TAB ===== -->
         <section id="tab-rest" class="hidden space-y-5">
             <div class="bg-neutral-900 p-5 rounded-2xl border border-neutral-800 space-y-3">
                 <div>
@@ -185,10 +170,7 @@
             </div>
         </section>
 
-        <!-- ===== PROFILE TAB ===== -->
         <section id="tab-profile" class="hidden space-y-5">
-
-            <!-- Body Stats & TDEE -->
             <div class="bg-neutral-900 p-5 rounded-2xl border border-neutral-800 space-y-4">
                 <div>
                     <h2 class="text-base font-semibold text-white">Body Stats & TDEE</h2>
@@ -208,7 +190,7 @@
                     </div>
                     <div>
                         <label class="text-[10px] text-neutral-500 font-bold uppercase block mb-1">Weight (kg)</label>
-                        <input id="prof-weight" type="number" step="0.1" placeholder="0" onchange="calculateMacros()" class="w-full bg-neutral-950 border border-neutral-800 rounded-lg px-3 py-2 text-sm text-white focus:outline-none text-center">
+                        <input id="prof-weight" type="number" step="0.1" placeholder="0" onchange="manualProfileWeightUpdate()" class="w-full bg-neutral-950 border border-neutral-800 rounded-lg px-3 py-2 text-sm text-white focus:outline-none text-center">
                     </div>
                     <div>
                         <label class="text-[10px] text-neutral-500 font-bold uppercase block mb-1">Height (cm)</label>
@@ -232,6 +214,7 @@
                         <button id="goal-bulk" onclick="setGoal('bulk')" class="flex-1 py-1.5 text-xs font-bold rounded-lg transition-colors text-neutral-500">Bulk</button>
                     </div>
                 </div>
+
                 <div class="pt-4 border-t border-neutral-800 text-center">
                     <p class="text-[10px] font-bold text-neutral-500 uppercase tracking-widest mb-1">Daily Target</p>
                     <p id="calc-calories" class="text-3xl font-bold text-indigo-400">---<span class="text-sm text-neutral-500 font-medium ml-1">kcal</span></p>
@@ -252,50 +235,40 @@
                 </div>
             </div>
 
-            <!-- Body Weight Tracker (NEW) -->
             <div class="bg-neutral-900 p-5 rounded-2xl border border-neutral-800 space-y-4">
                 <div>
                     <h2 class="text-base font-semibold text-white">Body Weight Tracker</h2>
-                    <p class="text-xs text-neutral-400">Log your daily body weight to track progress.</p>
+                    <p class="text-xs text-neutral-400">Log daily to see your trend. This auto-updates your TDEE.</p>
                 </div>
-
-                <!-- Entry Form -->
-                <div class="flex flex-wrap gap-2 items-end">
-                    <div class="flex-1 min-w-[120px]">
-                        <label class="text-[10px] text-neutral-500 font-bold uppercase block mb-1">Date</label>
-                        <input id="weight-date" type="date" class="w-full bg-neutral-950 border border-neutral-800 rounded-lg px-3 py-2 text-sm text-white focus:outline-none">
-                    </div>
-                    <div class="flex-1 min-w-[100px]">
-                        <label class="text-[10px] text-neutral-500 font-bold uppercase block mb-1">Weight (kg)</label>
-                        <input id="weight-input" type="number" step="0.1" placeholder="0.0" class="w-full bg-neutral-950 border border-neutral-800 rounded-lg px-3 py-2 text-sm text-white focus:outline-none">
-                    </div>
-                    <button onclick="saveWeightEntry()" class="bg-indigo-600 text-white px-5 py-2 rounded-xl text-sm font-semibold hover:bg-indigo-500 transition active:scale-95 h-[42px] flex items-center">
-                        <i class="fa-solid fa-plus mr-1.5"></i> Save
-                    </button>
+                <div class="flex gap-2">
+                    <input id="bw-input" type="number" step="0.1" placeholder="Weight (kg)" class="flex-1 bg-neutral-950 border border-neutral-800 rounded-xl px-4 py-3 text-sm text-white focus:outline-none">
+                    <button onclick="logBodyWeight()" class="bg-emerald-600 text-white px-5 py-2 rounded-xl text-sm font-bold shadow-lg active:scale-95 transition-transform">Log</button>
                 </div>
-
-                <!-- Chart -->
-                <div class="h-44 w-full">
+                
+                <div class="h-32 w-full pt-2">
                     <canvas id="weight-chart"></canvas>
                 </div>
-
-                <!-- History List -->
-                <div>
-                    <div class="flex justify-between items-center mb-2">
-                        <h4 class="text-[10px] font-bold tracking-widest text-neutral-500 uppercase">History</h4>
-                        <span id="weight-count-badge" class="text-[10px] text-neutral-500 bg-neutral-800 px-2 py-0.5 rounded-full">0 entries</span>
-                    </div>
-                    <div id="weight-history-list" class="space-y-1 max-h-48 overflow-y-auto pr-1 hide-scrollbar">
-                        <!-- populated by renderWeightTracker() -->
-                    </div>
-                </div>
+                
+                <div id="bw-history-list" class="max-h-32 overflow-y-auto space-y-1 pr-1 text-xs"></div>
             </div>
 
+            <div class="bg-neutral-900 p-5 rounded-2xl border border-neutral-800 space-y-4">
+                <div>
+                    <h2 class="text-base font-semibold text-white">Data Management</h2>
+                    <p class="text-xs text-neutral-400">Backup your history and templates to a file, or restore from a previous backup across devices.</p>
+                </div>
+                <div class="flex gap-2">
+                    <button onclick="exportData()" class="flex-1 bg-neutral-800 text-indigo-400 py-2.5 rounded-xl text-xs font-bold border border-neutral-700 active:scale-95 transition-transform"><i class="fa-solid fa-download mr-1"></i> Export JSON</button>
+                    <label class="flex-1 bg-neutral-800 text-emerald-400 py-2.5 rounded-xl text-xs font-bold border border-neutral-700 text-center cursor-pointer active:scale-95 transition-transform">
+                        <i class="fa-solid fa-upload mr-1"></i> Import JSON
+                        <input type="file" id="import-data-file" accept=".json" class="hidden" onchange="importData(event)">
+                    </label>
+                </div>
+            </div>
         </section>
 
     </main>
 
-    <!-- ===== BOTTOM NAV ===== -->
     <nav class="bg-neutral-900/90 backdrop-blur-md border-t border-neutral-800 fixed bottom-0 left-0 right-0 z-50 px-2 pt-2 pb-6 flex justify-between items-center">
         <button onclick="switchTab('dashboard')" id="nav-dashboard" class="flex flex-col items-center flex-1 space-y-1 text-indigo-400 transition-colors">
             <i class="fa-solid fa-calendar-alt text-lg"></i>
@@ -320,17 +293,15 @@
     </nav>
 
     <script>
-        // ============================================================
-        //  DATA LAYER
-        // ============================================================
+        // --- DATA LAYER ---
         let appState = {
             templates: [],
             history: [],
+            bodyWeightHistory: [],
             dayOverrides: {},
             restDays: [0, 6],
             currentActiveWorkout: null,
-            profile: { weight: '', height: '', age: 23, gender: 'male', activity: 1.55, goal: 'maintain' },
-            weightEntries: [] // { date: 'YYYY-MM-DD', weight: number }
+            profile: { weight: '', height: '', age: 23, gender: 'male', activity: 1.55, goal: 'maintain' }
         };
 
         const weekDayNames = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
@@ -338,37 +309,29 @@
         let chartInstancesArr = [];
         let weightChartInstance = null;
         let navDate = new Date();
-        let historyCollapsed = false;
 
         function initApp() {
             const cachedData = localStorage.getItem('pulseLift_v3_clean_data');
             if (cachedData) {
                 let parsed = JSON.parse(cachedData);
-                appState = { ...appState, ...parsed, profile: { ...appState.profile, ...(parsed.profile || {}) } };
-                // ensure weightEntries exists
-                if (!appState.weightEntries) appState.weightEntries = [];
+                appState = { 
+                    ...appState, 
+                    ...parsed, 
+                    bodyWeightHistory: parsed.bodyWeightHistory || [],
+                    profile: { ...appState.profile, ...(parsed.profile || {}) } 
+                };
             }
 
-            document.getElementById('current-date-badge').innerText = new Date().toLocaleDateString('en-US', { month: 'short',
-                day: 'numeric', year: 'numeric' });
-
-            // Set default date for weight tracker to today
-            const todayStr = new Date().toISOString().split('T')[0];
-            document.getElementById('weight-date').value = todayStr;
-
+            document.getElementById('current-date-badge').innerText = new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
             renderDashboard();
             renderRestDaysConfigTab();
             initProfileTab();
-            renderWeightTracker();
         }
 
         function saveToLocalStorage() {
             localStorage.setItem('pulseLift_v3_clean_data', JSON.stringify(appState));
         }
 
-        // ============================================================
-        //  TAB SWITCHING
-        // ============================================================
         function switchTab(targetTab) {
             ['dashboard', 'workout', 'analytics', 'rest', 'profile'].forEach(tab => {
                 document.getElementById(`tab-${tab}`).classList.add('hidden');
@@ -380,21 +343,16 @@
             document.getElementById(`nav-${targetTab}`).classList.add('text-indigo-400');
             document.getElementById(`nav-${targetTab}`).classList.remove('text-neutral-500');
 
-            const titles = { 'dashboard': 'Dashboard', 'workout': 'Workouts', 'analytics': 'Total Volume', 'rest': 'Schedule',
-                'profile': 'Stats & History' };
+            const titles = { 'dashboard': 'Dashboard', 'workout': 'Workouts', 'analytics': 'Total Volume', 'rest': 'Schedule', 'profile': 'Stats & Settings' };
             document.getElementById('page-title').innerText = titles[targetTab];
 
-            if (targetTab === 'dashboard') { renderDashboard();
-                renderDashboardWorkoutHistory(); }
+            if (targetTab === 'dashboard') renderDashboard();
             if (targetTab === 'workout') renderTemplateList();
             if (targetTab === 'analytics') setupAnalyticsContexts();
-            if (targetTab === 'profile') { renderWeightTracker();
-                renderWeightChart(); }
+            if (targetTab === 'profile') { initProfileTab(); renderBodyWeightTracker(); }
         }
 
-        // ============================================================
-        //  DASHBOARD
-        // ============================================================
+        // --- TAB 1: DASHBOARD ---
         function renderDashboard() {
             const gridContainer = document.getElementById('calendar-grid');
             gridContainer.innerHTML = '';
@@ -407,7 +365,7 @@
                 const lastLog = sortedHistory[0];
                 document.getElementById('stat-last-workout').innerText = formatDaysAgo(new Date(lastLog.date));
                 statName.innerText = lastLog.templateName;
-
+                
                 if (lastLog.startTime && lastLog.endTime) {
                     const formatTime = (ts) => new Date(ts).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
                     statInsight.innerText = `⏱ ${formatTime(lastLog.startTime)} - ${formatTime(lastLog.endTime)} (${lastLog.durationMins}m)`;
@@ -422,8 +380,7 @@
             }
 
             const todayIndex = new Date().getDay();
-            document.getElementById('stat-today-status').innerText = appState.restDays.includes(todayIndex) ?
-                "Scheduled Rest Today" : "Workout Day";
+            document.getElementById('stat-today-status').innerText = appState.restDays.includes(todayIndex) ? "Scheduled Rest Today" : "Workout Day";
 
             let nextDueStr = "No Schedule Setup";
             if (appState.restDays.length < 7) {
@@ -431,8 +388,7 @@
                     let futureCheck = new Date();
                     futureCheck.setDate(new Date().getDate() + i);
                     if (!appState.restDays.includes(futureCheck.getDay())) {
-                        nextDueStr = i === 1 ? "Tomorrow" : i === 2 ? "In 2 days" : futureCheck.toLocaleDateString('en-US', {
-                            weekday: 'long' });
+                        nextDueStr = i === 1 ? "Tomorrow" : i === 2 ? "In 2 days" : futureCheck.toLocaleDateString('en-US', { weekday: 'long' });
                         break;
                     }
                 }
@@ -441,21 +397,18 @@
 
             const targetYear = navDate.getFullYear();
             const targetMonth = navDate.getMonth();
-            document.getElementById('map-month-year').innerText = navDate.toLocaleDateString('en-US', { month: 'short',
-                year: 'numeric' });
+            document.getElementById('map-month-year').innerText = navDate.toLocaleDateString('en-US', { month: 'short', year: 'numeric' });
 
             const daysInMonth = new Date(targetYear, targetMonth + 1, 0).getDate();
             const firstDayIndex = new Date(targetYear, targetMonth, 1).getDay();
-            const shiftedStart = firstDayIndex === 0 ? 6 : firstDayIndex - 1;
+            const shiftedStart = firstDayIndex === 0 ? 6 : firstDayIndex - 1; 
 
             for (let i = 0; i < shiftedStart; i++) gridContainer.appendChild(document.createElement('div'));
 
             for (let day = 1; day <= daysInMonth; day++) {
-                const loopingDateString =
-                    `${targetYear}-${String(targetMonth + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+                const loopingDateString = `${targetYear}-${String(targetMonth + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
                 const cellBlock = document.createElement('div');
-                cellBlock.className =
-                    "aspect-square rounded-lg flex items-center justify-center text-[11px] font-bold transition-all active:scale-90 cursor-pointer ";
+                cellBlock.className = "aspect-square rounded-lg flex items-center justify-center text-[11px] font-bold transition-all active:scale-90 cursor-pointer ";
                 cellBlock.innerText = day;
 
                 const hasWorkout = appState.history.some(log => log.date === loopingDateString);
@@ -478,39 +431,30 @@
                 gridContainer.appendChild(cellBlock);
             }
 
-            renderDashboardWorkoutHistory();
+            renderWorkoutHistory();
         }
 
-        function navigateMonth(direction) { navDate.setMonth(navDate.getMonth() + direction);
-            renderDashboard(); }
+        function navigateMonth(direction) { navDate.setMonth(navDate.getMonth() + direction); renderDashboard(); }
 
         function formatDaysAgo(d) {
-            const today = new Date();
-            today.setHours(0, 0, 0, 0);
-            d.setHours(0, 0, 0, 0);
+            const today = new Date(); today.setHours(0,0,0,0); d.setHours(0,0,0,0);
             const diff = Math.ceil(Math.abs(today - d) / (1000 * 60 * 60 * 24));
             return diff === 0 ? "Today" : diff === 1 ? "Yesterday" : `${diff} days ago`;
         }
 
-        // ============================================================
-        //  WORKOUT HISTORY (Dashboard - Collapsible)
-        // ============================================================
         function toggleWorkoutHistory() {
-            historyCollapsed = !historyCollapsed;
-            const container = document.getElementById('workout-history-collapsible');
-            const icon = document.getElementById('history-toggle-icon');
-            if (historyCollapsed) {
-                container.classList.remove('open');
-                icon.classList.add('rotate-180');
+            const content = document.getElementById('dashboard-history-content');
+            const chevron = document.getElementById('history-chevron');
+            if (content.classList.contains('hidden')) {
+                content.classList.remove('hidden');
+                chevron.classList.add('rotate-180');
             } else {
-                container.classList.add('open');
-                icon.classList.remove('rotate-180');
-                // re-render to make sure content is fresh
-                renderDashboardWorkoutHistory();
+                content.classList.add('hidden');
+                chevron.classList.remove('rotate-180');
             }
         }
 
-        function renderDashboardWorkoutHistory() {
+        function renderWorkoutHistory() {
             const container = document.getElementById('dashboard-history-list');
             container.innerHTML = '';
 
@@ -519,41 +463,30 @@
                 return;
             }
 
-            const sorted = [...appState.history].sort((a, b) => b.endTime - a.endTime);
+            const sorted = [...appState.history].sort((a,b) => b.endTime - a.endTime);
 
             sorted.forEach(log => {
                 const card = document.createElement('div');
                 card.className = "bg-neutral-950 p-3 rounded-xl border border-neutral-800 space-y-2";
-
-                const dateDisplay = new Date(log.date).toLocaleDateString('en-US', { weekday: 'short', month: 'short',
-                    day: 'numeric', year: 'numeric' });
-
-                const formatT = (ts) => ts ? new Date(ts).toLocaleTimeString('en-US', { hour: '2-digit',
-                    minute: '2-digit' }) : '--:--';
-                const startTimeStr = formatT(log.startTime);
-                const endTimeStr = formatT(log.endTime);
-
+                
+                const dateDisplay = new Date(log.date).toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric', year: 'numeric' });
+                const formatT = (ts) => ts ? new Date(ts).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' }) : '--:--';
+                
                 card.innerHTML = `
-                        <div class="flex justify-between items-start">
-                            <h4 class="text-sm font-bold text-white">${log.templateName}</h4>
-                            <span class="text-[10px] text-emerald-400 bg-emerald-400/10 px-2 py-0.5 rounded font-mono">${log.durationMins} min</span>
-                        </div>
-                        <div class="flex justify-between items-center text-xs text-neutral-400">
-                            <span><i class="fa-regular fa-calendar pr-1"></i> ${dateDisplay}</span>
-                            <span class="font-mono"><i class="fa-regular fa-clock pr-1"></i> ${startTimeStr} - ${endTimeStr}</span>
-                        </div>
-                    `;
+                    <div class="flex justify-between items-start">
+                        <h4 class="text-sm font-bold text-white">${log.templateName}</h4>
+                        <span class="text-[10px] text-emerald-400 bg-emerald-400/10 px-2 py-0.5 rounded font-mono">${log.durationMins} min</span>
+                    </div>
+                    <div class="flex justify-between items-center text-xs text-neutral-400">
+                        <span><i class="fa-regular fa-calendar pr-1"></i> ${dateDisplay}</span>
+                        <span class="font-mono"><i class="fa-regular fa-clock pr-1"></i> ${formatT(log.startTime)} - ${formatT(log.endTime)}</span>
+                    </div>
+                `;
                 container.appendChild(card);
             });
-
-            // Update badge count
-            const badge = document.querySelector('#workout-history-collapsible .text-neutral-400');
-            // (optional)
         }
 
-        // ============================================================
-        //  WORKOUT TEMPLATES & SESSIONS (unchanged, keep as-is)
-        // ============================================================
+        // --- TAB 2: WORKOUTS & INTERACTIVE CONTROLS ---
         function renderTemplateList() {
             const container = document.getElementById('templates-container');
             container.innerHTML = '';
@@ -568,24 +501,22 @@
 
             appState.templates.forEach(tmpl => {
                 const card = document.createElement('div');
-                card.className =
-                "bg-neutral-900 p-4 rounded-2xl border border-neutral-800 flex justify-between items-center";
+                card.className = "bg-neutral-900 p-4 rounded-2xl border border-neutral-800 flex justify-between items-center";
                 card.innerHTML = `
-                        <div class="space-y-1 pr-2 max-w-[70%]">
-                            <h3 class="font-bold text-white text-base truncate">${tmpl.name}</h3>
-                            <p class="text-[10px] text-neutral-400 truncate">${tmpl.exercises.join(', ')}</p>
-                        </div>
-                        <div class="flex gap-1.5">
-                            <button onclick="openTemplateEditor('${tmpl.id}')" class="p-2.5 bg-neutral-800 rounded-xl text-xs text-neutral-400"><i class="fa-solid fa-pen"></i></button>
-                            <button onclick="startWorkoutSession('${tmpl.id}')" class="px-4 py-2 bg-indigo-600 text-white font-bold text-xs rounded-xl">Start</button>
-                        </div>
-                    `;
+                    <div class="space-y-1 pr-2 max-w-[70%]">
+                        <h3 class="font-bold text-white text-base truncate">${tmpl.name}</h3>
+                        <p class="text-[10px] text-neutral-400 truncate">${tmpl.exercises.join(', ')}</p>
+                    </div>
+                    <div class="flex gap-1.5">
+                        <button onclick="openTemplateEditor('${tmpl.id}')" class="p-2.5 bg-neutral-800 rounded-xl text-xs text-neutral-400"><i class="fa-solid fa-pen"></i></button>
+                        <button onclick="startWorkoutSession('${tmpl.id}')" class="px-4 py-2 bg-indigo-600 text-white font-bold text-xs rounded-xl">Start</button>
+                    </div>
+                `;
                 container.appendChild(card);
             });
         }
 
         let activeEditingTemplateId = null;
-
         function openTemplateEditor(id = null) {
             activeEditingTemplateId = id;
             document.getElementById('workout-list-view').classList.add('hidden');
@@ -601,21 +532,17 @@
                 addExerciseFieldToEditor('');
             }
         }
-
         function addExerciseFieldToEditor(val = '') {
             const c = document.getElementById('editor-exercises-list');
             const r = document.createElement('div');
             r.className = "flex gap-2 items-center";
-            r.innerHTML =
-                `<input type="text" value="${val}" placeholder="Exercise Name" class="flex-1 ex-inp bg-neutral-950 border border-neutral-800 rounded-xl px-3 py-2.5 text-xs text-white focus:outline-none"><button onclick="this.parentElement.remove()" class="p-2.5 text-rose-500 bg-neutral-950 border border-neutral-800 rounded-xl"><i class="fa-solid fa-trash"></i></button>`;
+            r.innerHTML = `<input type="text" value="${val}" placeholder="Exercise Name" class="flex-1 ex-inp bg-neutral-950 border border-neutral-800 rounded-xl px-3 py-2.5 text-xs text-white focus:outline-none"><button onclick="this.parentElement.remove()" class="p-2.5 text-rose-500 bg-neutral-950 border border-neutral-800 rounded-xl"><i class="fa-solid fa-trash"></i></button>`;
             c.appendChild(r);
         }
-
         function cancelTemplateEditing() {
             document.getElementById('workout-edit-view').classList.add('hidden');
             document.getElementById('workout-list-view').classList.remove('hidden');
         }
-
         function saveTemplateFromEditor() {
             const name = document.getElementById('edit-template-name').value.trim();
             if (!name) return alert('Name required.');
@@ -623,20 +550,16 @@
             if (exArr.length === 0) return alert('Add one exercise.');
             if (activeEditingTemplateId) {
                 const t = appState.templates.find(t => t.id === activeEditingTemplateId);
-                t.name = name;
-                t.exercises = exArr;
+                t.name = name; t.exercises = exArr;
             } else {
                 appState.templates.push({ id: 'tmpl_' + Date.now(), name, exercises: exArr });
             }
-            saveToLocalStorage();
-            cancelTemplateEditing();
-            renderTemplateList();
+            saveToLocalStorage(); cancelTemplateEditing(); renderTemplateList();
         }
 
-        // --- SESSION LOGIC ---
         function startWorkoutSession(templateId) {
             const template = appState.templates.find(t => t.id === templateId);
-            const historyChronological = [...appState.history].sort((a, b) => a.endTime - b.endTime);
+            const historyChronological = [...appState.history].sort((a,b) => a.endTime - b.endTime);
             const lastMatchingLog = historyChronological.filter(h => h.templateId === templateId).pop();
 
             appState.currentActiveWorkout = {
@@ -650,18 +573,14 @@
             template.exercises.forEach(exName => {
                 if (lastMatchingLog && lastMatchingLog.exercises[exName]) {
                     appState.currentActiveWorkout.exercises[exName] = lastMatchingLog.exercises[exName].map(s => ({
-                        weight: s.weight,
-                        reps: s.reps,
-                        completed: false
+                        weight: s.weight, reps: s.reps, completed: false
                     }));
                 } else {
                     appState.currentActiveWorkout.exercises[exName] = [{ weight: '', reps: '', completed: false }];
                 }
             });
 
-            saveToLocalStorage();
-            renderTemplateList();
-            startSessionTimer();
+            saveToLocalStorage(); renderTemplateList(); startSessionTimer();
         }
 
         function startSessionTimer() {
@@ -669,11 +588,9 @@
             const lbl = document.getElementById('active-timer');
             activeTimerInterval = setInterval(() => {
                 if (!appState.currentActiveWorkout) return clearInterval(activeTimerInterval);
-                const refTime = appState.currentActiveWorkout.actualStartTime || appState.currentActiveWorkout
-                    .sessionInitiatedAt;
+                const refTime = appState.currentActiveWorkout.actualStartTime || appState.currentActiveWorkout.sessionInitiatedAt;
                 const sec = Math.floor((Date.now() - refTime) / 1000);
-                lbl.innerText =
-                    `Duration: ${String(Math.floor(sec / 60)).padStart(2, '0')}:${String(sec % 60).padStart(2, '0')}`;
+                lbl.innerText = `Duration: ${String(Math.floor(sec / 60)).padStart(2, '0')}:${String(sec % 60).padStart(2, '0')}`;
             }, 1000);
         }
 
@@ -684,55 +601,81 @@
             c.innerHTML = '';
             Object.keys(aw.exercises).forEach(exName => {
                 const b = document.createElement('div');
-                b.className = "bg-neutral-900 rounded-2xl border border-neutral-800 p-4 space-y-3";
+                b.className = "bg-neutral-900 rounded-2xl border border-neutral-800 p-3 space-y-3";
                 b.innerHTML = `
-                        <h4 class="font-bold text-white text-sm">${exName}</h4>
-                        <div class="grid grid-cols-4 gap-2 text-center text-[10px] font-bold text-neutral-500 uppercase tracking-wider">
-                            <div>Set</div><div>kg</div><div>Reps</div><div>Done</div>
-                        </div>
-                        <div id="set-rows-${btoa(exName).replace(/=/g, '')}" class="space-y-2"></div>
-                        <button onclick="addSetRowToActiveExercise('${exName}')" class="w-full bg-neutral-950 text-neutral-400 py-1.5 rounded-xl text-xs font-semibold border border-neutral-800">+ Add Set</button>
-                    `;
-                c.appendChild(b);
-                renderActiveSetRows(exName);
+                    <h4 class="font-bold text-white text-sm px-1">${exName}</h4>
+                    <div class="grid grid-cols-[30px_minmax(0,1fr)_minmax(0,1fr)_40px] gap-2 text-center text-[10px] font-bold text-neutral-500 uppercase tracking-wider px-1">
+                        <div>Set</div><div>kg</div><div>Reps</div><div>Done</div>
+                    </div>
+                    <div id="set-rows-${btoa(exName).replace(/=/g, '')}" class="space-y-2"></div>
+                    <button onclick="addSetRowToActiveExercise('${exName}')" class="w-full bg-neutral-950 text-neutral-400 py-2 rounded-xl text-xs font-semibold border border-neutral-800 active:bg-neutral-800 transition-colors">+ Add Set</button>
+                `;
+                c.appendChild(b); renderActiveSetRows(exName);
             });
         }
 
+        // Feature 2: Inline Interactive Adjusters Integrated Here
         function renderActiveSetRows(exName) {
             const c = document.getElementById(`set-rows-${btoa(exName).replace(/=/g, '')}`);
             c.innerHTML = '';
             appState.currentActiveWorkout.exercises[exName].forEach((s, i) => {
                 const r = document.createElement('div');
-                r.className =
-                    `grid grid-cols-4 gap-2 items-center text-center py-1 rounded-xl transition-colors ${s.completed ? 'bg-emerald-950/20' : ''}`;
+                r.className = `grid grid-cols-[30px_minmax(0,1fr)_minmax(0,1fr)_40px] gap-2 items-center text-center py-1.5 px-1 rounded-xl transition-colors ${s.completed ? 'bg-emerald-950/20' : ''}`;
+                
+                // Construct inner HTML using custom increment/decrement wrappers
                 r.innerHTML = `
-                        <span class="text-xs font-bold text-neutral-400">${i + 1}</span>
-                        <input type="number" step="any" value="${s.weight}" placeholder="0" onchange="updateSetData('${exName}', ${i}, 'weight', this.value)" ${s.completed ? 'disabled' : ''} class="bg-neutral-950 border border-neutral-800 rounded-lg py-1.5 text-center text-xs text-white focus:outline-none">
-                        <input type="number" value="${s.reps}" placeholder="0" onchange="updateSetData('${exName}', ${i}, 'reps', this.value)" ${s.completed ? 'disabled' : ''} class="bg-neutral-950 border border-neutral-800 rounded-lg py-1.5 text-center text-xs text-white focus:outline-none">
-                        <button onclick="toggleSetCompletion('${exName}', ${i})" class="p-1.5 rounded-lg text-xs font-bold transition-all ${s.completed ? 'bg-emerald-500 text-black' : 'bg-neutral-800 text-neutral-400'}"><i class="fa-solid ${s.completed ? 'fa-check' : 'fa-circle-notch'}"></i></button>
-                    `;
+                    <span class="text-xs font-bold text-neutral-400">${i + 1}</span>
+                    
+                    <div class="flex items-center justify-between bg-neutral-950 border border-neutral-800 rounded-lg overflow-hidden h-9">
+                        <button onclick="adjustSetField('${exName}', ${i}, 'weight', -2.5)" class="w-8 h-full text-neutral-400 hover:text-white bg-neutral-900 border-r border-neutral-800 disabled:opacity-30 active:bg-neutral-800 transition-colors flex items-center justify-center" ${s.completed ? 'disabled' : ''}><i class="fa-solid fa-minus text-[10px]"></i></button>
+                        <input type="number" step="any" value="${s.weight}" placeholder="0" onchange="updateSetData('${exName}', ${i}, 'weight', this.value)" ${s.completed ? 'disabled' : ''} class="w-full text-center text-xs font-bold text-white bg-transparent focus:outline-none">
+                        <button onclick="adjustSetField('${exName}', ${i}, 'weight', 2.5)" class="w-8 h-full text-neutral-400 hover:text-white bg-neutral-900 border-l border-neutral-800 disabled:opacity-30 active:bg-neutral-800 transition-colors flex items-center justify-center" ${s.completed ? 'disabled' : ''}><i class="fa-solid fa-plus text-[10px]"></i></button>
+                    </div>
+
+                    <div class="flex items-center justify-between bg-neutral-950 border border-neutral-800 rounded-lg overflow-hidden h-9">
+                        <button onclick="adjustSetField('${exName}', ${i}, 'reps', -1)" class="w-8 h-full text-neutral-400 hover:text-white bg-neutral-900 border-r border-neutral-800 disabled:opacity-30 active:bg-neutral-800 transition-colors flex items-center justify-center" ${s.completed ? 'disabled' : ''}><i class="fa-solid fa-minus text-[10px]"></i></button>
+                        <input type="number" value="${s.reps}" placeholder="0" onchange="updateSetData('${exName}', ${i}, 'reps', this.value)" ${s.completed ? 'disabled' : ''} class="w-full text-center text-xs font-bold text-white bg-transparent focus:outline-none">
+                        <button onclick="adjustSetField('${exName}', ${i}, 'reps', 1)" class="w-8 h-full text-neutral-400 hover:text-white bg-neutral-900 border-l border-neutral-800 disabled:opacity-30 active:bg-neutral-800 transition-colors flex items-center justify-center" ${s.completed ? 'disabled' : ''}><i class="fa-solid fa-plus text-[10px]"></i></button>
+                    </div>
+
+                    <button onclick="toggleSetCompletion('${exName}', ${i})" class="w-full h-9 flex items-center justify-center rounded-lg text-sm font-bold transition-all active:scale-90 ${s.completed ? 'bg-emerald-500 text-black' : 'bg-neutral-800 text-neutral-400'}"><i class="fa-solid ${s.completed ? 'fa-check' : 'fa-circle-notch'}"></i></button>
+                `;
                 c.appendChild(r);
             });
         }
 
-        function updateSetData(ex, i, f, v) { appState.currentActiveWorkout.exercises[ex][i][f] = v;
-            saveToLocalStorage(); }
+        // Logic for Interactive Increment/Decrement Buttons
+        function adjustSetField(exName, index, field, amount) {
+            const setObj = appState.currentActiveWorkout.exercises[exName][index];
+            if (setObj.completed) return; 
+
+            let currentVal = parseFloat(setObj[field]) || 0;
+            let newVal = currentVal + amount;
+            
+            if (newVal < 0) newVal = 0;
+            
+            // Round to 2 decimal places to prevent float precision bugs
+            newVal = Math.round(newVal * 100) / 100;
+            
+            setObj[field] = newVal;
+            saveToLocalStorage();
+            renderActiveSetRows(exName);
+        }
+
+        function updateSetData(ex, i, f, v) { appState.currentActiveWorkout.exercises[ex][i][f] = v; saveToLocalStorage(); }
 
         function toggleSetCompletion(ex, i) {
             const s = appState.currentActiveWorkout.exercises[ex][i];
             if (!s.weight || !s.reps) return alert("Fill out values first.");
+            
             if (!s.completed && !appState.currentActiveWorkout.actualStartTime) {
                 appState.currentActiveWorkout.actualStartTime = Date.now();
             }
-            s.completed = !s.completed;
-            saveToLocalStorage();
-            renderActiveSetRows(ex);
+
+            s.completed = !s.completed; saveToLocalStorage(); renderActiveSetRows(ex);
         }
 
-        function addSetRowToActiveExercise(ex) { appState.currentActiveWorkout.exercises[ex].push({ weight: '', reps: '',
-                completed: false });
-            saveToLocalStorage();
-            renderActiveSetRows(ex); }
+        function addSetRowToActiveExercise(ex) { appState.currentActiveWorkout.exercises[ex].push({weight:'', reps:'', completed:false}); saveToLocalStorage(); renderActiveSetRows(ex); }
 
         function finishCurrentWorkoutSession() {
             const aw = appState.currentActiveWorkout;
@@ -755,8 +698,7 @@
             Object.keys(aw.exercises).forEach(ex => {
                 const complete = aw.exercises[ex].filter(s => s.completed && s.weight && s.reps);
                 if (complete.length > 0) {
-                    logEntry.exercises[ex] = complete.map(s => ({ weight: parseFloat(s.weight), reps: parseInt(s
-                            .reps) }));
+                    logEntry.exercises[ex] = complete.map(s => ({ weight: parseFloat(s.weight), reps: parseInt(s.reps) }));
                     setsCount++;
                 }
             });
@@ -770,26 +712,16 @@
 
             appState.currentActiveWorkout = null;
             if (activeTimerInterval) clearInterval(activeTimerInterval);
-            saveToLocalStorage();
-            renderTemplateList();
-            // update dashboard history if visible
-            if (!document.getElementById('tab-dashboard').classList.contains('hidden')) {
-                renderDashboardWorkoutHistory();
-            }
+            saveToLocalStorage(); renderTemplateList(); renderDashboard();
         }
 
-        // ============================================================
-        //  ANALYTICS
-        // ============================================================
+        // --- TAB 3: VOLUME ANALYTICS ---
         function setupAnalyticsContexts() {
             const sel = document.getElementById('analytics-template-select');
             sel.innerHTML = '';
             if (appState.templates.length === 0) return;
             appState.templates.forEach(t => {
-                const o = document.createElement('option');
-                o.value = t.id;
-                o.innerText = t.name;
-                sel.appendChild(o);
+                const o = document.createElement('option'); o.value = t.id; o.innerText = t.name; sel.appendChild(o);
             });
             updateAnalyticsChart();
         }
@@ -798,7 +730,7 @@
             const tId = document.getElementById('analytics-template-select').value;
             const container = document.getElementById('analytics-charts-container');
             const emptyState = document.getElementById('analytics-empty-state');
-
+            
             chartInstancesArr.forEach(c => c.destroy());
             chartInstancesArr = [];
             container.innerHTML = '';
@@ -822,21 +754,19 @@
                 let setHistoryHTML = '';
 
                 validLogs.forEach(log => {
-                    let totalVolume = log.exercises[exName].reduce((sum, set) => sum + (set.weight * set.reps),
-                    0);
-                    let displayDate = new Date(log.date).toLocaleDateString('en-US', { month: 'short',
-                        day: 'numeric' });
-
+                    let totalVolume = log.exercises[exName].reduce((sum, set) => sum + (set.weight * set.reps), 0);
+                    let displayDate = new Date(log.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+                    
                     labels.push(displayDate);
                     dataPts.push(totalVolume);
 
                     let setStr = log.exercises[exName].map(s => `${s.weight}kg × ${s.reps}`).join(', ');
                     setHistoryHTML = `
-                            <div class="flex justify-between items-center py-2 border-b border-neutral-800/60 last:border-0">
-                                <span class="text-xs font-medium text-neutral-400 w-16">${displayDate}</span>
-                                <span class="text-xs text-white text-right break-words flex-1 pl-2">${setStr}</span>
-                            </div>
-                        ` + setHistoryHTML;
+                        <div class="flex justify-between items-center py-2 border-b border-neutral-800/60 last:border-0">
+                            <span class="text-xs font-medium text-neutral-400 w-16">${displayDate}</span>
+                            <span class="text-xs text-white text-right break-words flex-1 pl-2">${setStr}</span>
+                        </div>
+                    ` + setHistoryHTML; 
                 });
 
                 const chartWidth = Math.max(100, labels.length * 15);
@@ -844,27 +774,27 @@
                 const block = document.createElement('div');
                 block.className = "bg-neutral-900 p-4 rounded-2xl border border-neutral-800 space-y-4";
                 block.innerHTML = `
-                        <div class="flex justify-between items-end">
-                            <h3 class="text-sm font-bold text-white">${exName}</h3>
-                            <span class="text-[10px] text-indigo-400 font-mono tracking-wide">LATEST VOL: ${dataPts[dataPts.length-1]} kg</span>
+                    <div class="flex justify-between items-end">
+                        <h3 class="text-sm font-bold text-white">${exName}</h3>
+                        <span class="text-[10px] text-indigo-400 font-mono tracking-wide">LATEST VOL: ${dataPts[dataPts.length-1]} kg</span>
+                    </div>
+                    <div class="overflow-x-auto hide-scrollbar w-full border-b border-neutral-800/60 pb-3">
+                        <div class="h-32" style="width: ${chartWidth}%; min-width: 100%;">
+                            <canvas id="chart-${idx}"></canvas>
                         </div>
-                        <div class="overflow-x-auto hide-scrollbar w-full border-b border-neutral-800/60 pb-3">
-                            <div class="h-32" style="width: ${chartWidth}%; min-width: 100%;">
-                                <canvas id="chart-${idx}"></canvas>
-                            </div>
+                    </div>
+                    <div>
+                        <h4 class="text-[10px] font-bold tracking-widest text-neutral-500 uppercase mb-2">Previous Sets Guideline</h4>
+                        <div class="max-h-32 overflow-y-auto pr-1">
+                            ${setHistoryHTML}
                         </div>
-                        <div>
-                            <h4 class="text-[10px] font-bold tracking-widest text-neutral-500 uppercase mb-2">Previous Sets Guideline</h4>
-                            <div class="max-h-32 overflow-y-auto pr-1">
-                                ${setHistoryHTML}
-                            </div>
-                        </div>
-                    `;
+                    </div>
+                `;
                 container.appendChild(block);
 
                 const ctx = document.getElementById(`chart-${idx}`).getContext('2d');
                 const chart = new Chart(ctx, {
-                    type: 'line',
+                    type: 'line', 
                     data: {
                         labels: labels,
                         datasets: [{
@@ -881,13 +811,11 @@
                         }]
                     },
                     options: {
-                        responsive: true,
-                        maintainAspectRatio: false,
+                        responsive: true, maintainAspectRatio: false,
                         plugins: { legend: { display: false } },
                         scales: {
                             x: { grid: { display: false }, ticks: { color: '#a3a3a3', font: { size: 9 } } },
-                            y: { grid: { color: '#262626' }, ticks: { color: '#a3a3a3', font: { size: 9 } },
-                                beginAtZero: true }
+                            y: { grid: { color: '#262626' }, ticks: { color: '#a3a3a3', font: { size: 9 } }, beginAtZero: true }
                         }
                     }
                 });
@@ -895,32 +823,25 @@
             });
         }
 
-        // ============================================================
-        //  REST DAYS
-        // ============================================================
+        // --- TAB 4: REST DAYS ---
         function renderRestDaysConfigTab() {
             const c = document.getElementById('rest-days-selectors-container');
             c.innerHTML = '';
-            [1, 2, 3, 4, 5, 6, 0].forEach(d => {
+            [1,2,3,4,5,6,0].forEach(d => {
                 const isRest = appState.restDays.includes(d);
                 const r = document.createElement('div');
                 r.className = "flex justify-between items-center bg-neutral-950 p-4 rounded-xl border border-neutral-800";
-                r.innerHTML =
-                    `<span class="text-sm font-semibold text-neutral-200">${weekDayNames[d]}</span><button onclick="toggleRest(${d})" class="w-12 h-6 flex items-center rounded-full p-0.5 ${isRest ? 'bg-emerald-500 justify-end' : 'bg-neutral-800 justify-start'}"><span class="bg-white w-5 h-5 rounded-full shadow-md"></span></button>`;
+                r.innerHTML = `<span class="text-sm font-semibold text-neutral-200">${weekDayNames[d]}</span><button onclick="toggleRest(${d})" class="w-12 h-6 flex items-center rounded-full p-0.5 ${isRest ? 'bg-emerald-500 justify-end' : 'bg-neutral-800 justify-start'}"><span class="bg-white w-5 h-5 rounded-full shadow-md"></span></button>`;
                 c.appendChild(r);
             });
         }
-
         function toggleRest(d) {
             if (appState.restDays.includes(d)) appState.restDays = appState.restDays.filter(x => x !== d);
             else appState.restDays.push(d);
-            saveToLocalStorage();
-            renderRestDaysConfigTab();
+            saveToLocalStorage(); renderRestDaysConfigTab();
         }
 
-        // ============================================================
-        //  PROFILE - TDEE
-        // ============================================================
+        // --- TAB 5: PROFILE, BODYWEIGHT & DATA MANAGEMENT ---
         function initProfileTab() {
             const p = appState.profile;
             document.getElementById('prof-age').value = p.age || '';
@@ -928,7 +849,13 @@
             document.getElementById('prof-weight').value = p.weight || '';
             document.getElementById('prof-height').value = p.height || '';
             document.getElementById('prof-activity').value = p.activity || '1.55';
+            
+            if (appState.bodyWeightHistory.length === 0 && p.weight) {
+                document.getElementById('bw-input').value = p.weight;
+            }
+
             setGoal(p.goal || 'maintain', false);
+            renderBodyWeightTracker();
         }
 
         function setGoal(goal, runCalc = true) {
@@ -943,7 +870,11 @@
                     btn.classList.remove('bg-neutral-800');
                 }
             });
-            if (runCalc) calculateMacros();
+            if(runCalc) calculateMacros();
+        }
+
+        function manualProfileWeightUpdate() {
+            calculateMacros();
         }
 
         function calculateMacros() {
@@ -953,123 +884,87 @@
             p.weight = parseFloat(document.getElementById('prof-weight').value) || 0;
             p.height = parseFloat(document.getElementById('prof-height').value) || 0;
             p.activity = parseFloat(document.getElementById('prof-activity').value);
-
+            
             saveToLocalStorage();
 
             if (!p.weight || !p.height || !p.age) {
-                document.getElementById('calc-calories').innerHTML =
-                    `---<span class="text-sm text-neutral-500 font-medium ml-1">kcal</span>`;
+                document.getElementById('calc-calories').innerHTML = `---<span class="text-sm text-neutral-500 font-medium ml-1">kcal</span>`;
                 ['p', 'c', 'f'].forEach(id => document.getElementById(`calc-${id}`).innerText = '--g');
                 return;
             }
 
             let bmr = (10 * p.weight) + (6.25 * p.height) - (5 * p.age);
             bmr += (p.gender === 'male') ? 5 : -161;
-
+            
             let tdee = bmr * p.activity;
             let targetKcal = tdee;
 
             if (p.goal === 'cut') targetKcal -= 500;
             if (p.goal === 'bulk') targetKcal += 500;
-
+            
             targetKcal = Math.round(targetKcal);
-
-            const protein = Math.round(p.weight * 2.2);
-            const fat = Math.round((targetKcal * 0.25) / 9);
+            
+            const protein = Math.round(p.weight * 2.2); 
+            const fat = Math.round((targetKcal * 0.25) / 9); 
             const remainingKcal = targetKcal - (protein * 4) - (fat * 9);
             const carbs = Math.round(remainingKcal / 4);
 
-            document.getElementById('calc-calories').innerHTML =
-                `${targetKcal}<span class="text-sm text-neutral-500 font-medium ml-1">kcal</span>`;
+            document.getElementById('calc-calories').innerHTML = `${targetKcal}<span class="text-sm text-neutral-500 font-medium ml-1">kcal</span>`;
             document.getElementById('calc-p').innerText = `${protein}g`;
             document.getElementById('calc-c').innerText = `${carbs}g`;
             document.getElementById('calc-f').innerText = `${fat}g`;
         }
 
-        // ============================================================
-        //  BODY WEIGHT TRACKER (NEW)
-        // ============================================================
-        function renderWeightTracker() {
-            const list = document.getElementById('weight-history-list');
-            const badge = document.getElementById('weight-count-badge');
-            list.innerHTML = '';
-
-            const entries = [...appState.weightEntries].sort((a, b) => b.date.localeCompare(a.date));
-
-            if (entries.length === 0) {
-                list.innerHTML = '<p class="text-xs text-neutral-500 italic py-2">No weight entries yet.</p>';
-                badge.textContent = '0 entries';
-                return;
-            }
-
-            badge.textContent = `${entries.length} entries`;
-
-            entries.forEach(entry => {
-                const row = document.createElement('div');
-                row.className =
-                    "flex justify-between items-center bg-neutral-950 px-3 py-2 rounded-lg border border-neutral-800";
-                const displayDate = new Date(entry.date + 'T00:00:00').toLocaleDateString('en-US', { month: 'short',
-                    day: 'numeric', year: 'numeric' });
-                row.innerHTML = `
-                        <span class="text-xs text-neutral-300">${displayDate}</span>
-                        <span class="text-sm font-bold text-white">${entry.weight} kg</span>
-                        <button onclick="deleteWeightEntry('${entry.date}')" class="text-rose-500 hover:text-rose-400 text-xs p-1"><i class="fa-solid fa-trash"></i></button>
-                    `;
-                list.appendChild(row);
-            });
-
-            // Check if today's entry exists and pre-fill
-            const todayStr = new Date().toISOString().split('T')[0];
-            const todayEntry = appState.weightEntries.find(e => e.date === todayStr);
-            const input = document.getElementById('weight-input');
-            if (todayEntry) {
-                input.value = todayEntry.weight;
+        function logBodyWeight() {
+            const val = parseFloat(document.getElementById('bw-input').value);
+            if (!val) return alert("Enter a valid weight to log.");
+            
+            const today = new Date().toISOString().split('T')[0];
+            const existingIdx = appState.bodyWeightHistory.findIndex(w => w.date === today);
+            
+            if (existingIdx >= 0) {
+                appState.bodyWeightHistory[existingIdx].weight = val;
             } else {
-                input.value = '';
+                appState.bodyWeightHistory.push({ date: today, weight: val });
             }
-
-            renderWeightChart();
+            
+            appState.bodyWeightHistory.sort((a, b) => new Date(a.date) - new Date(b.date));
+            
+            appState.profile.weight = val;
+            document.getElementById('prof-weight').value = val;
+            calculateMacros(); 
+            
+            saveToLocalStorage();
+            renderBodyWeightTracker();
         }
 
-        function renderWeightChart() {
-            const canvas = document.getElementById('weight-chart');
-            if (!canvas) return;
-
-            if (weightChartInstance) {
-                weightChartInstance.destroy();
-                weightChartInstance = null;
-            }
-
-            const sorted = [...appState.weightEntries].sort((a, b) => a.date.localeCompare(b.date));
-
-            if (sorted.length === 0) {
-                // Show empty state on chart
-                const ctx = canvas.getContext('2d');
-                weightChartInstance = new Chart(ctx, {
-                    type: 'line',
-                    data: {
-                        labels: ['No Data'],
-                        datasets: [{ data: [0], borderColor: '#3f3f46', pointBackgroundColor: '#3f3f46' }]
-                    },
-                    options: {
-                        responsive: true,
-                        maintainAspectRatio: false,
-                        plugins: { legend: { display: false }, tooltip: { enabled: false } },
-                        scales: {
-                            x: { grid: { display: false }, ticks: { color: '#52525b', font: { size: 9 } } },
-                            y: { grid: { color: '#262626' }, ticks: { color: '#52525b', font: { size: 9 } },
-                                beginAtZero: true }
-                        }
-                    }
-                });
+        function renderBodyWeightTracker() {
+            const list = document.getElementById('bw-history-list');
+            list.innerHTML = '';
+            
+            if (appState.bodyWeightHistory.length === 0) {
+                list.innerHTML = '<p class="text-neutral-500 italic py-1 mt-2 text-center">No weigh-ins logged yet.</p>';
+                if(weightChartInstance) weightChartInstance.destroy();
                 return;
             }
 
-            const labels = sorted.map(e => new Date(e.date + 'T00:00:00').toLocaleDateString('en-US', { month: 'short',
-                day: 'numeric' }));
-            const data = sorted.map(e => e.weight);
+            const revHist = [...appState.bodyWeightHistory].reverse();
+            revHist.forEach(log => {
+                const dateDisplay = new Date(log.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+                list.innerHTML += `
+                    <div class="flex justify-between py-2 border-b border-neutral-800/60 last:border-0">
+                        <span class="text-neutral-400">${dateDisplay}</span>
+                        <span class="text-emerald-400 font-mono font-bold">${log.weight} kg</span>
+                    </div>`;
+            });
 
-            const ctx = canvas.getContext('2d');
+            document.getElementById('bw-input').value = revHist[0].weight;
+
+            if (weightChartInstance) weightChartInstance.destroy();
+            const ctx = document.getElementById('weight-chart').getContext('2d');
+            const labels = appState.bodyWeightHistory.map(l => new Date(l.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }));
+            const data = appState.bodyWeightHistory.map(l => l.weight);
+
             weightChartInstance = new Chart(ctx, {
                 type: 'line',
                 data: {
@@ -1078,93 +973,76 @@
                         data: data,
                         borderColor: '#10b981',
                         backgroundColor: 'rgba(16, 185, 129, 0.15)',
-                        fill: true,
-                        borderWidth: 2.5,
+                        borderWidth: 2,
                         pointBackgroundColor: '#10b981',
-                        pointBorderColor: '#000000',
-                        pointBorderWidth: 2,
+                        pointBorderColor: '#000',
+                        pointBorderWidth: 1,
                         pointRadius: 4,
-                        pointHoverRadius: 6,
-                        tension: 0.25
+                        fill: true,
+                        tension: 0.3
                     }]
                 },
                 options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    plugins: {
-                        legend: { display: false },
-                        tooltip: {
-                            callbacks: {
-                                label: function(context) {
-                                    return context.parsed.y + ' kg';
-                                }
-                            }
-                        }
-                    },
+                    responsive: true, maintainAspectRatio: false,
+                    plugins: { legend: { display: false } },
                     scales: {
-                        x: { grid: { display: false }, ticks: { color: '#a3a3a3', font: { size: 9 } } },
-                        y: { grid: { color: '#262626' }, ticks: { color: '#a3a3a3', font: { size: 9 } },
-                            beginAtZero: true }
+                        x: { display: false },
+                        y: { 
+                            grid: { color: '#262626' }, 
+                            ticks: { color: '#a3a3a3', font: { size: 9 } },
+                            suggestedMin: Math.min(...data) - 2,
+                            suggestedMax: Math.max(...data) + 2
+                        }
                     }
                 }
             });
         }
 
-        function saveWeightEntry() {
-            const dateInput = document.getElementById('weight-date');
-            const weightInput = document.getElementById('weight-input');
-
-            const date = dateInput.value;
-            const weight = parseFloat(weightInput.value);
-
-            if (!date) return alert('Please select a date.');
-            if (!weight || weight <= 0) return alert('Please enter a valid weight in kg.');
-
-            // Check for duplicate
-            const existingIdx = appState.weightEntries.findIndex(e => e.date === date);
-            if (existingIdx !== -1) {
-                if (!confirm(`An entry for ${date} already exists. Overwrite?`)) return;
-                appState.weightEntries[existingIdx].weight = weight;
-            } else {
-                appState.weightEntries.push({ date, weight });
+        // Feature 1: Export & Import Engine
+        function exportData() {
+            try {
+                const dataStr = JSON.stringify(appState, null, 2);
+                const blob = new Blob([dataStr], { type: "application/json" });
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = `pulselift_backup_${new Date().toISOString().split('T')[0]}.json`;
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+                URL.revokeObjectURL(url);
+            } catch (err) {
+                alert("Failed to export data: " + err.message);
             }
+        }
 
-            saveToLocalStorage();
-            renderWeightTracker();
+        function importData(event) {
+            const file = event.target.files[0];
+            if (!file) return;
 
-            // If today's date, also update the profile weight field if the user wants
-            const todayStr = new Date().toISOString().split('T')[0];
-            if (date === todayStr) {
-                // Optionally sync with profile weight
-                const profWeight = document.getElementById('prof-weight');
-                if (profWeight) {
-                    profWeight.value = weight;
-                    calculateMacros();
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                try {
+                    const importedState = JSON.parse(e.target.result);
+                    // Basic validation to ensure it's a valid app state file
+                    if (importedState && typeof importedState === 'object' && (importedState.templates || importedState.history)) {
+                        appState = { ...appState, ...importedState };
+                        saveToLocalStorage();
+                        alert("Data imported successfully! The app will now reload.");
+                        location.reload(); // Reload to cleanly reset UI states
+                    } else {
+                        alert("Invalid backup file format. Missing core data arrays.");
+                    }
+                } catch (error) {
+                    alert("Error reading file. Ensure it is a valid JSON backup.");
                 }
-            }
-
-            weightInput.value = '';
-            // Keep date as-is
+            };
+            reader.readAsText(file);
+            // Reset the input so the same file can be selected again if needed
+            event.target.value = '';
         }
 
-        function deleteWeightEntry(date) {
-            if (!confirm(`Delete weight entry for ${date}?`)) return;
-            appState.weightEntries = appState.weightEntries.filter(e => e.date !== date);
-            saveToLocalStorage();
-            renderWeightTracker();
-        }
-
-        // ============================================================
-        //  INIT
-        // ============================================================
-        window.onload = function() {
-            initApp();
-            // Initial render of dashboard history
-            renderDashboardWorkoutHistory();
-            // Make sure weight chart renders if profile is the default
-            renderWeightChart();
-        };
+        window.onload = initApp;
     </script>
-
 </body>
 </html>
