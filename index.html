@@ -23,6 +23,7 @@
             -ms-overflow-style: none;
             scrollbar-width: none;
         }
+        /* Hide default number input arrows */
         input[type=number]::-webkit-inner-spin-button, 
         input[type=number]::-webkit-outer-spin-button { 
             -webkit-appearance: none; 
@@ -63,6 +64,8 @@
                         <h2 class="text-base font-semibold text-white">Consistency Map</h2>
                     </div>
                     <div class="flex items-center gap-3">
+                        <button onclick="toggleCalendarEdit()" id="cal-edit-btn" class="text-neutral-500 hover:text-white p-1 text-sm transition-colors"><i class="fa-solid fa-lock"></i></button>
+                        <div class="w-[1px] h-4 bg-neutral-700"></div>
                         <button onclick="navigateMonth(-1)" class="text-neutral-400 hover:text-white p-1 text-sm"><i class="fa-solid fa-chevron-left"></i></button>
                         <span class="text-xs font-bold text-neutral-200 min-w-[70px] text-center" id="map-month-year"></span>
                         <button onclick="navigateMonth(1)" class="text-neutral-400 hover:text-white p-1 text-sm"><i class="fa-solid fa-chevron-right"></i></button>
@@ -72,10 +75,10 @@
                     <div>M</div><div>T</div><div>W</div><div>T</div><div>F</div><div>S</div><div>S</div>
                 </div>
                 <div id="calendar-grid" class="grid grid-cols-7 gap-2"></div>
-                <div class="flex justify-between items-center pt-3 border-t border-neutral-800 text-[10px] text-neutral-400 flex-wrap gap-2">
-                    <div class="flex items-center gap-1"><div class="w-2.5 h-2.5 rounded-full bg-emerald-500"></div> Logged</div>
-                    <div class="flex items-center gap-1"><div class="w-2.5 h-2.5 rounded-full bg-emerald-800 border border-emerald-400 border-dashed"></div> Unlogged</div>
+                <div class="flex justify-between items-center pt-3 border-t border-neutral-800 text-[10px] text-neutral-400 flex-wrap gap-x-3 gap-y-1">
+                    <div class="flex items-center gap-1"><div class="w-2.5 h-2.5 rounded-full bg-emerald-500"></div> Done</div>
                     <div class="flex items-center gap-1"><div class="w-2.5 h-2.5 rounded-full bg-emerald-950 border border-emerald-500/40"></div> Rest</div>
+                    <div class="flex items-center gap-1"><div class="w-2.5 h-2.5 rounded-full bg-cyan-900 border border-cyan-500/40"></div> Unlogged</div>
                     <div class="flex items-center gap-1"><div class="w-2.5 h-2.5 rounded-full bg-rose-600"></div> Missed</div>
                 </div>
             </div>
@@ -89,7 +92,8 @@
                     <i id="history-chevron" class="fa-solid fa-chevron-down text-neutral-500 transition-transform"></i>
                 </button>
                 <div id="dashboard-history-content" class="hidden px-5 pb-5 pt-1 border-t border-neutral-800/50">
-                    <div id="dashboard-history-list" class="space-y-2 mt-2"></div>
+                    <div id="dashboard-history-list" class="space-y-2 mt-2">
+                        </div>
                 </div>
             </div>
         </section>
@@ -113,7 +117,10 @@
 
             <div id="workout-list-view" class="space-y-4">
                 <div class="flex justify-between items-center">
-                    <h2 class="text-lg font-bold text-white">Routines</h2>
+                    <div>
+                        <h2 class="text-lg font-bold text-white">Routines</h2>
+                        <p class="text-xs text-neutral-400">Tap a block to start</p>
+                    </div>
                     <button onclick="openTemplateEditor()" class="bg-neutral-900 text-indigo-400 border border-neutral-800 px-3 py-1.5 rounded-xl text-xs font-semibold flex items-center gap-1.5">
                         <i class="fa-solid fa-plus"></i> New Template
                     </button>
@@ -257,9 +264,9 @@
                     <p class="text-xs text-neutral-400">Backup your history and templates to a file, or restore from a previous backup across devices.</p>
                 </div>
                 <div class="flex gap-2">
-                    <button onclick="exportData()" class="flex-1 bg-neutral-800 text-indigo-400 py-2.5 rounded-xl text-xs font-bold border border-neutral-700 active:scale-95 transition-transform"><i class="fa-solid fa-download mr-1"></i> Export JSON</button>
+                    <button onclick="exportData()" class="flex-1 bg-neutral-800 text-indigo-400 py-2.5 rounded-xl text-xs font-bold border border-neutral-700 active:scale-95 transition-transform"><i class="fa-solid fa-download mr-1"></i> Export</button>
                     <label class="flex-1 bg-neutral-800 text-emerald-400 py-2.5 rounded-xl text-xs font-bold border border-neutral-700 text-center cursor-pointer active:scale-95 transition-transform">
-                        <i class="fa-solid fa-upload mr-1"></i> Import JSON
+                        <i class="fa-solid fa-upload mr-1"></i> Import
                         <input type="file" id="import-data-file" accept=".json" class="hidden" onchange="importData(event)">
                     </label>
                 </div>
@@ -282,7 +289,7 @@
             <span class="text-[9px] font-semibold tracking-wide">Stats</span>
         </button>
         <button onclick="switchTab('rest')" id="nav-rest" class="flex flex-col items-center flex-1 space-y-1 text-neutral-500 transition-colors">
-            <i class="fa-solid fa-circle text-lg"></i>
+            <i class="fa-solid fa-moon text-lg"></i>
             <span class="text-[9px] font-semibold tracking-wide">Rest</span>
         </button>
         <button onclick="switchTab('profile')" id="nav-profile" class="flex flex-col items-center flex-1 space-y-1 text-neutral-500 transition-colors">
@@ -308,6 +315,7 @@
         let chartInstancesArr = [];
         let weightChartInstance = null;
         let navDate = new Date();
+        let isCalendarEditMode = false;
 
         function initApp() {
             const cachedData = localStorage.getItem('pulseLift_v3_clean_data');
@@ -342,7 +350,7 @@
             document.getElementById(`nav-${targetTab}`).classList.add('text-indigo-400');
             document.getElementById(`nav-${targetTab}`).classList.remove('text-neutral-500');
 
-            const titles = { 'dashboard': 'Dashboard', 'workout': 'Workouts', 'analytics': 'Total Volume', 'rest': 'Schedule', 'profile': 'Stats & Settings' };
+            const titles = { 'dashboard': 'Dashboard', 'workout': 'Routines', 'analytics': 'Total Volume', 'rest': 'Schedule', 'profile': 'Settings' };
             document.getElementById('page-title').innerText = titles[targetTab];
 
             if (targetTab === 'dashboard') renderDashboard();
@@ -351,8 +359,16 @@
             if (targetTab === 'profile') { initProfileTab(); renderBodyWeightTracker(); }
         }
 
+        function toggleCalendarEdit() {
+            isCalendarEditMode = !isCalendarEditMode;
+            renderDashboard();
+        }
+
         // --- TAB 1: DASHBOARD ---
         function renderDashboard() {
+            // Update lock icon visual state
+            document.getElementById('cal-edit-btn').innerHTML = isCalendarEditMode ? '<i class="fa-solid fa-unlock text-indigo-400"></i>' : '<i class="fa-solid fa-lock"></i>';
+
             const gridContainer = document.getElementById('calendar-grid');
             gridContainer.innerHTML = '';
 
@@ -378,27 +394,27 @@
                 statInsight.classList.add('hidden');
             }
 
-            // Next Workout Logic Update
-            const today = new Date();
-            const localTodayStr = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`;
-            const todayIndex = today.getDay();
+            // Next Workout Smart Routing Logic
+            const now = new Date();
+            const todayStr = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
+            const todayIndex = now.getDay();
             
+            const hasLoggedToday = appState.history.some(log => log.date === todayStr);
             const isRestToday = appState.restDays.includes(todayIndex);
-            const hasWorkedOutToday = appState.history.some(log => log.date === localTodayStr) || appState.dayOverrides[localTodayStr] === 'unlogged';
 
             document.getElementById('stat-today-status').innerText = isRestToday ? "Scheduled Rest Today" : "Workout Day";
 
             let nextDueStr = "No Schedule Setup";
             if (appState.restDays.length < 7) {
-                if (!isRestToday && !hasWorkedOutToday) {
+                if (!isRestToday && !hasLoggedToday) {
                     nextDueStr = "Pending Today";
                 } else {
-                    // Find next non-rest day
+                    // Start looking from tomorrow
                     for (let i = 1; i <= 7; i++) {
                         let futureCheck = new Date();
-                        futureCheck.setDate(today.getDate() + i);
+                        futureCheck.setDate(now.getDate() + i);
                         if (!appState.restDays.includes(futureCheck.getDay())) {
-                            nextDueStr = (i === 1) ? "Tomorrow" : (i === 2) ? "In 2 days" : futureCheck.toLocaleDateString('en-US', { weekday: 'long' });
+                            nextDueStr = i === 1 ? "Tomorrow" : i === 2 ? "In 2 days" : futureCheck.toLocaleDateString('en-US', { weekday: 'long' });
                             break;
                         }
                     }
@@ -419,75 +435,33 @@
             for (let day = 1; day <= daysInMonth; day++) {
                 const loopingDateString = `${targetYear}-${String(targetMonth + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
                 const cellBlock = document.createElement('div');
-                cellBlock.className = "aspect-square rounded-lg flex items-center justify-center text-[11px] font-bold transition-all active:scale-90 cursor-pointer ";
+                cellBlock.className = `aspect-square rounded-lg flex items-center justify-center text-[11px] font-bold transition-all ${isCalendarEditMode ? 'cursor-pointer active:scale-90' : ''} `;
                 cellBlock.innerText = day;
 
                 const hasWorkout = appState.history.some(log => log.date === loopingDateString);
                 const override = appState.dayOverrides[loopingDateString];
 
-                if (hasWorkout) {
-                    cellBlock.className += "bg-emerald-500 text-black shadow-sm shadow-emerald-500/30";
-                } else if (override === 'unlogged') {
-                    cellBlock.className += "bg-emerald-800 text-white border border-emerald-400 border-dashed";
-                } else if (override === 'rest') {
-                    cellBlock.className += "bg-emerald-950 text-emerald-400 border border-emerald-500/30";
-                } else if (override === 'missed') {
-                    cellBlock.className += "bg-rose-600 text-white";
-                } else {
-                    cellBlock.className += "bg-neutral-800 text-neutral-500";
-                }
+                if (hasWorkout) cellBlock.className += "bg-emerald-500 text-black shadow-sm shadow-emerald-500/30";
+                else if (override === 'rest') cellBlock.className += "bg-emerald-950 text-emerald-400 border border-emerald-500/30";
+                else if (override === 'unlogged') cellBlock.className += "bg-cyan-900 text-cyan-400 border border-cyan-500/30";
+                else if (override === 'missed') cellBlock.className += "bg-rose-600 text-white";
+                else cellBlock.className += "bg-neutral-800 text-neutral-500";
 
-                // Long Press Handlers (Desktop & Touch Support)
-                let pressTimer;
-                let isLongPress = false;
-
-                const triggerLongPress = () => {
-                    isLongPress = true;
-                    if (confirm("Mark this day as 'Workout completed, but not logged'?")) {
-                        appState.dayOverrides[loopingDateString] = 'unlogged';
-                        saveToLocalStorage();
-                        renderDashboard();
-                    }
-                };
-
-                const triggerShortTap = () => {
+                cellBlock.onclick = () => {
+                    if (!isCalendarEditMode) return; // Locked state prevention
+                    
+                    if (hasWorkout) return alert("Completed sessions cannot be overridden here.");
                     const current = appState.dayOverrides[loopingDateString];
-                    if (current === 'unlogged') delete appState.dayOverrides[loopingDateString];
-                    else if (!current) appState.dayOverrides[loopingDateString] = 'rest';
+                    
+                    // Cycle: Null -> Rest -> Missed -> Unlogged -> Null
+                    if (!current) appState.dayOverrides[loopingDateString] = 'rest';
                     else if (current === 'rest') appState.dayOverrides[loopingDateString] = 'missed';
+                    else if (current === 'missed') appState.dayOverrides[loopingDateString] = 'unlogged';
                     else delete appState.dayOverrides[loopingDateString];
+                    
                     saveToLocalStorage();
                     renderDashboard();
                 };
-
-                // Mobile Touch Events
-                cellBlock.addEventListener('touchstart', (e) => {
-                    if(hasWorkout) return;
-                    isLongPress = false;
-                    pressTimer = setTimeout(triggerLongPress, 600);
-                }, {passive: true});
-
-                cellBlock.addEventListener('touchend', (e) => {
-                    if (pressTimer) clearTimeout(pressTimer);
-                    if (!isLongPress && !hasWorkout) triggerShortTap();
-                });
-
-                // Desktop Mouse Events
-                cellBlock.addEventListener('mousedown', (e) => {
-                    if(e.button !== 0 || hasWorkout) return;
-                    isLongPress = false;
-                    pressTimer = setTimeout(triggerLongPress, 600);
-                });
-
-                cellBlock.addEventListener('mouseup', (e) => {
-                    if(e.button !== 0 || hasWorkout) return;
-                    if (pressTimer) clearTimeout(pressTimer);
-                    if (!isLongPress) triggerShortTap();
-                });
-
-                // Prevent context menu (right click / native mobile long press menu)
-                cellBlock.oncontextmenu = (e) => { e.preventDefault(); return false; };
-
                 gridContainer.appendChild(cellBlock);
             }
 
@@ -562,27 +536,21 @@
 
             appState.templates.forEach(tmpl => {
                 const card = document.createElement('div');
-                // Masonry style layout block
-                card.className = "break-inside-avoid mb-3 bg-neutral-900 p-4 rounded-2xl border border-neutral-800 flex flex-col relative cursor-pointer active:scale-95 transition-transform group";
+                // Pinterest/Masonry Style Tile Block
+                card.className = "break-inside-avoid mb-3 bg-neutral-900 p-4 rounded-2xl border border-neutral-800 relative cursor-pointer hover:border-neutral-700 active:scale-95 transition-all shadow-lg";
                 
-                // Card click to start session, avoiding the edit button
-                card.onclick = (e) => {
-                    if (e.target.closest('button')) return;
-                    startWorkoutSession(tmpl.id);
-                };
-
+                // Card click starts routine
+                card.onclick = () => startWorkoutSession(tmpl.id);
+                
                 card.innerHTML = `
-                    <div class="absolute top-3 right-3">
-                        <button onclick="openTemplateEditor('${tmpl.id}')" class="p-2 bg-neutral-800 hover:bg-neutral-700 rounded-lg text-xs text-neutral-400 transition-colors">
-                            <i class="fa-solid fa-pen"></i>
-                        </button>
-                    </div>
+                    <button onclick="event.stopPropagation(); openTemplateEditor('${tmpl.id}')" class="absolute top-3 right-3 text-neutral-500 hover:text-white p-1.5 bg-neutral-950/80 backdrop-blur-sm rounded-lg border border-neutral-800 transition-colors">
+                        <i class="fa-solid fa-pen text-[10px]"></i>
+                    </button>
                     
-                    <div class="space-y-2.5 mt-1">
-                        <h3 class="font-bold text-white text-base pr-8 leading-tight">${tmpl.name}</h3>
-                        <div class="flex flex-wrap gap-1.5">
-                            ${tmpl.exercises.map(ex => `<span class="bg-neutral-950 border border-neutral-800 text-[10px] text-neutral-400 px-2 py-1 rounded-md">${ex}</span>`).join('')}
-                        </div>
+                    <h3 class="font-bold text-white text-base mb-2.5 pr-6 leading-tight">${tmpl.name}</h3>
+                    
+                    <div class="flex flex-wrap gap-1.5">
+                        ${tmpl.exercises.map(ex => `<span class="bg-neutral-950 text-neutral-400 border border-neutral-800 text-[9px] px-1.5 py-0.5 rounded-md font-medium whitespace-nowrap overflow-hidden text-ellipsis max-w-[100%]">${ex}</span>`).join('')}
                     </div>
                 `;
                 container.appendChild(card);
@@ -696,16 +664,19 @@
                 
                 r.innerHTML = `
                     <span class="text-xs font-bold text-neutral-400">${i + 1}</span>
+                    
                     <div class="flex items-center justify-between bg-neutral-950 border border-neutral-800 rounded-lg overflow-hidden h-9">
                         <button onclick="adjustSetField('${exName}', ${i}, 'weight', -2.5)" class="w-8 h-full text-neutral-400 hover:text-white bg-neutral-900 border-r border-neutral-800 disabled:opacity-30 active:bg-neutral-800 transition-colors flex items-center justify-center" ${s.completed ? 'disabled' : ''}><i class="fa-solid fa-minus text-[10px]"></i></button>
                         <input type="number" step="any" value="${s.weight}" placeholder="0" onchange="updateSetData('${exName}', ${i}, 'weight', this.value)" ${s.completed ? 'disabled' : ''} class="w-full text-center text-xs font-bold text-white bg-transparent focus:outline-none">
                         <button onclick="adjustSetField('${exName}', ${i}, 'weight', 2.5)" class="w-8 h-full text-neutral-400 hover:text-white bg-neutral-900 border-l border-neutral-800 disabled:opacity-30 active:bg-neutral-800 transition-colors flex items-center justify-center" ${s.completed ? 'disabled' : ''}><i class="fa-solid fa-plus text-[10px]"></i></button>
                     </div>
+
                     <div class="flex items-center justify-between bg-neutral-950 border border-neutral-800 rounded-lg overflow-hidden h-9">
                         <button onclick="adjustSetField('${exName}', ${i}, 'reps', -1)" class="w-8 h-full text-neutral-400 hover:text-white bg-neutral-900 border-r border-neutral-800 disabled:opacity-30 active:bg-neutral-800 transition-colors flex items-center justify-center" ${s.completed ? 'disabled' : ''}><i class="fa-solid fa-minus text-[10px]"></i></button>
                         <input type="number" value="${s.reps}" placeholder="0" onchange="updateSetData('${exName}', ${i}, 'reps', this.value)" ${s.completed ? 'disabled' : ''} class="w-full text-center text-xs font-bold text-white bg-transparent focus:outline-none">
                         <button onclick="adjustSetField('${exName}', ${i}, 'reps', 1)" class="w-8 h-full text-neutral-400 hover:text-white bg-neutral-900 border-l border-neutral-800 disabled:opacity-30 active:bg-neutral-800 transition-colors flex items-center justify-center" ${s.completed ? 'disabled' : ''}><i class="fa-solid fa-plus text-[10px]"></i></button>
                     </div>
+
                     <button onclick="toggleSetCompletion('${exName}', ${i})" class="w-full h-9 flex items-center justify-center rounded-lg text-sm font-bold transition-all active:scale-90 ${s.completed ? 'bg-emerald-500 text-black' : 'bg-neutral-800 text-neutral-400'}"><i class="fa-solid ${s.completed ? 'fa-check' : 'fa-circle-notch'}"></i></button>
                 `;
                 c.appendChild(r);
@@ -718,7 +689,6 @@
 
             let currentVal = parseFloat(setObj[field]) || 0;
             let newVal = currentVal + amount;
-            
             if (newVal < 0) newVal = 0;
             newVal = Math.round(newVal * 100) / 100;
             
@@ -748,11 +718,15 @@
             const sysStartTime = aw.actualStartTime || aw.sessionInitiatedAt;
             const computedDuration = Math.max(1, Math.round((sysEndTime - sysStartTime) / 60000));
 
+            // Standardize log string relative to local time to prevent TZ bugs mapping to calendar
+            const localNow = new Date();
+            const todayStrForLog = `${localNow.getFullYear()}-${String(localNow.getMonth() + 1).padStart(2, '0')}-${String(localNow.getDate()).padStart(2, '0')}`;
+
             const logEntry = {
                 id: 'log_' + Date.now(),
                 templateId: aw.templateId,
                 templateName: aw.templateName,
-                date: new Date().toISOString().split('T')[0],
+                date: todayStrForLog,
                 startTime: sysStartTime,
                 endTime: sysEndTime,
                 durationMins: computedDuration,
@@ -903,8 +877,7 @@
         function toggleRest(d) {
             if (appState.restDays.includes(d)) appState.restDays = appState.restDays.filter(x => x !== d);
             else appState.restDays.push(d);
-            saveToLocalStorage(); renderRestDaysConfigTab();
-            renderDashboard(); // Update dashboard due dates dynamically
+            saveToLocalStorage(); renderRestDaysConfigTab(); renderDashboard();
         }
 
         // --- TAB 5: PROFILE, BODYWEIGHT & DATA MANAGEMENT ---
@@ -1064,7 +1037,6 @@
             });
         }
 
-        // Export & Import Engine
         function exportData() {
             try {
                 const dataStr = JSON.stringify(appState, null, 2);
