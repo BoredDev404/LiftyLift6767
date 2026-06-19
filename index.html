@@ -23,7 +23,6 @@
             -ms-overflow-style: none;
             scrollbar-width: none;
         }
-        /* Hide default number input arrows */
         input[type=number]::-webkit-inner-spin-button, 
         input[type=number]::-webkit-outer-spin-button { 
             -webkit-appearance: none; 
@@ -73,8 +72,9 @@
                     <div>M</div><div>T</div><div>W</div><div>T</div><div>F</div><div>S</div><div>S</div>
                 </div>
                 <div id="calendar-grid" class="grid grid-cols-7 gap-2"></div>
-                <div class="flex justify-between items-center pt-3 border-t border-neutral-800 text-[10px] text-neutral-400">
-                    <div class="flex items-center gap-1"><div class="w-2.5 h-2.5 rounded-full bg-emerald-500"></div> Done</div>
+                <div class="flex justify-between items-center pt-3 border-t border-neutral-800 text-[10px] text-neutral-400 flex-wrap gap-2">
+                    <div class="flex items-center gap-1"><div class="w-2.5 h-2.5 rounded-full bg-emerald-500"></div> Logged</div>
+                    <div class="flex items-center gap-1"><div class="w-2.5 h-2.5 rounded-full bg-emerald-800 border border-emerald-400 border-dashed"></div> Unlogged</div>
                     <div class="flex items-center gap-1"><div class="w-2.5 h-2.5 rounded-full bg-emerald-950 border border-emerald-500/40"></div> Rest</div>
                     <div class="flex items-center gap-1"><div class="w-2.5 h-2.5 rounded-full bg-rose-600"></div> Missed</div>
                 </div>
@@ -89,8 +89,7 @@
                     <i id="history-chevron" class="fa-solid fa-chevron-down text-neutral-500 transition-transform"></i>
                 </button>
                 <div id="dashboard-history-content" class="hidden px-5 pb-5 pt-1 border-t border-neutral-800/50">
-                    <div id="dashboard-history-list" class="space-y-2 mt-2">
-                        </div>
+                    <div id="dashboard-history-list" class="space-y-2 mt-2"></div>
                 </div>
             </div>
         </section>
@@ -119,7 +118,7 @@
                         <i class="fa-solid fa-plus"></i> New Template
                     </button>
                 </div>
-                <div id="templates-container" class="space-y-3"></div>
+                <div id="templates-container" class="columns-2 gap-3 w-full"></div>
             </div>
 
             <div id="workout-edit-view" class="hidden bg-neutral-900 p-5 rounded-2xl border border-neutral-800 space-y-4">
@@ -283,11 +282,11 @@
             <span class="text-[9px] font-semibold tracking-wide">Stats</span>
         </button>
         <button onclick="switchTab('rest')" id="nav-rest" class="flex flex-col items-center flex-1 space-y-1 text-neutral-500 transition-colors">
-            <i class="fa-solid fa-bed text-lg"></i>
+            <i class="fa-solid fa-circle text-lg"></i>
             <span class="text-[9px] font-semibold tracking-wide">Rest</span>
         </button>
         <button onclick="switchTab('profile')" id="nav-profile" class="flex flex-col items-center flex-1 space-y-1 text-neutral-500 transition-colors">
-            <i class="fa-solid fa-user text-lg"></i>
+            <i class="fa-solid fa-gear text-lg"></i>
             <span class="text-[9px] font-semibold tracking-wide">Profile</span>
         </button>
     </nav>
@@ -379,17 +378,29 @@
                 statInsight.classList.add('hidden');
             }
 
-            const todayIndex = new Date().getDay();
-            document.getElementById('stat-today-status').innerText = appState.restDays.includes(todayIndex) ? "Scheduled Rest Today" : "Workout Day";
+            // Next Workout Logic Update
+            const today = new Date();
+            const localTodayStr = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`;
+            const todayIndex = today.getDay();
+            
+            const isRestToday = appState.restDays.includes(todayIndex);
+            const hasWorkedOutToday = appState.history.some(log => log.date === localTodayStr) || appState.dayOverrides[localTodayStr] === 'unlogged';
+
+            document.getElementById('stat-today-status').innerText = isRestToday ? "Scheduled Rest Today" : "Workout Day";
 
             let nextDueStr = "No Schedule Setup";
             if (appState.restDays.length < 7) {
-                for (let i = 1; i <= 7; i++) {
-                    let futureCheck = new Date();
-                    futureCheck.setDate(new Date().getDate() + i);
-                    if (!appState.restDays.includes(futureCheck.getDay())) {
-                        nextDueStr = i === 1 ? "Tomorrow" : i === 2 ? "In 2 days" : futureCheck.toLocaleDateString('en-US', { weekday: 'long' });
-                        break;
+                if (!isRestToday && !hasWorkedOutToday) {
+                    nextDueStr = "Pending Today";
+                } else {
+                    // Find next non-rest day
+                    for (let i = 1; i <= 7; i++) {
+                        let futureCheck = new Date();
+                        futureCheck.setDate(today.getDate() + i);
+                        if (!appState.restDays.includes(futureCheck.getDay())) {
+                            nextDueStr = (i === 1) ? "Tomorrow" : (i === 2) ? "In 2 days" : futureCheck.toLocaleDateString('en-US', { weekday: 'long' });
+                            break;
+                        }
                     }
                 }
             }
@@ -414,20 +425,69 @@
                 const hasWorkout = appState.history.some(log => log.date === loopingDateString);
                 const override = appState.dayOverrides[loopingDateString];
 
-                if (hasWorkout) cellBlock.className += "bg-emerald-500 text-black shadow-sm shadow-emerald-500/30";
-                else if (override === 'rest') cellBlock.className += "bg-emerald-950 text-emerald-400 border border-emerald-500/30";
-                else if (override === 'missed') cellBlock.className += "bg-rose-600 text-white";
-                else cellBlock.className += "bg-neutral-800 text-neutral-500";
+                if (hasWorkout) {
+                    cellBlock.className += "bg-emerald-500 text-black shadow-sm shadow-emerald-500/30";
+                } else if (override === 'unlogged') {
+                    cellBlock.className += "bg-emerald-800 text-white border border-emerald-400 border-dashed";
+                } else if (override === 'rest') {
+                    cellBlock.className += "bg-emerald-950 text-emerald-400 border border-emerald-500/30";
+                } else if (override === 'missed') {
+                    cellBlock.className += "bg-rose-600 text-white";
+                } else {
+                    cellBlock.className += "bg-neutral-800 text-neutral-500";
+                }
 
-                cellBlock.onclick = () => {
-                    if (hasWorkout) return alert("Completed sessions cannot be overridden here.");
+                // Long Press Handlers (Desktop & Touch Support)
+                let pressTimer;
+                let isLongPress = false;
+
+                const triggerLongPress = () => {
+                    isLongPress = true;
+                    if (confirm("Mark this day as 'Workout completed, but not logged'?")) {
+                        appState.dayOverrides[loopingDateString] = 'unlogged';
+                        saveToLocalStorage();
+                        renderDashboard();
+                    }
+                };
+
+                const triggerShortTap = () => {
                     const current = appState.dayOverrides[loopingDateString];
-                    if (!current) appState.dayOverrides[loopingDateString] = 'rest';
+                    if (current === 'unlogged') delete appState.dayOverrides[loopingDateString];
+                    else if (!current) appState.dayOverrides[loopingDateString] = 'rest';
                     else if (current === 'rest') appState.dayOverrides[loopingDateString] = 'missed';
                     else delete appState.dayOverrides[loopingDateString];
                     saveToLocalStorage();
                     renderDashboard();
                 };
+
+                // Mobile Touch Events
+                cellBlock.addEventListener('touchstart', (e) => {
+                    if(hasWorkout) return;
+                    isLongPress = false;
+                    pressTimer = setTimeout(triggerLongPress, 600);
+                }, {passive: true});
+
+                cellBlock.addEventListener('touchend', (e) => {
+                    if (pressTimer) clearTimeout(pressTimer);
+                    if (!isLongPress && !hasWorkout) triggerShortTap();
+                });
+
+                // Desktop Mouse Events
+                cellBlock.addEventListener('mousedown', (e) => {
+                    if(e.button !== 0 || hasWorkout) return;
+                    isLongPress = false;
+                    pressTimer = setTimeout(triggerLongPress, 600);
+                });
+
+                cellBlock.addEventListener('mouseup', (e) => {
+                    if(e.button !== 0 || hasWorkout) return;
+                    if (pressTimer) clearTimeout(pressTimer);
+                    if (!isLongPress) triggerShortTap();
+                });
+
+                // Prevent context menu (right click / native mobile long press menu)
+                cellBlock.oncontextmenu = (e) => { e.preventDefault(); return false; };
+
                 gridContainer.appendChild(cellBlock);
             }
 
@@ -490,6 +550,7 @@
         function renderTemplateList() {
             const container = document.getElementById('templates-container');
             container.innerHTML = '';
+            
             if (appState.currentActiveWorkout) {
                 document.getElementById('workout-active-view').classList.remove('hidden');
                 document.getElementById('workout-list-view').classList.add('hidden');
@@ -501,15 +562,27 @@
 
             appState.templates.forEach(tmpl => {
                 const card = document.createElement('div');
-                card.className = "bg-neutral-900 p-4 rounded-2xl border border-neutral-800 flex justify-between items-center";
+                // Masonry style layout block
+                card.className = "break-inside-avoid mb-3 bg-neutral-900 p-4 rounded-2xl border border-neutral-800 flex flex-col relative cursor-pointer active:scale-95 transition-transform group";
+                
+                // Card click to start session, avoiding the edit button
+                card.onclick = (e) => {
+                    if (e.target.closest('button')) return;
+                    startWorkoutSession(tmpl.id);
+                };
+
                 card.innerHTML = `
-                    <div class="space-y-1 pr-2 max-w-[70%]">
-                        <h3 class="font-bold text-white text-base truncate">${tmpl.name}</h3>
-                        <p class="text-[10px] text-neutral-400 truncate">${tmpl.exercises.join(', ')}</p>
+                    <div class="absolute top-3 right-3">
+                        <button onclick="openTemplateEditor('${tmpl.id}')" class="p-2 bg-neutral-800 hover:bg-neutral-700 rounded-lg text-xs text-neutral-400 transition-colors">
+                            <i class="fa-solid fa-pen"></i>
+                        </button>
                     </div>
-                    <div class="flex gap-1.5">
-                        <button onclick="openTemplateEditor('${tmpl.id}')" class="p-2.5 bg-neutral-800 rounded-xl text-xs text-neutral-400"><i class="fa-solid fa-pen"></i></button>
-                        <button onclick="startWorkoutSession('${tmpl.id}')" class="px-4 py-2 bg-indigo-600 text-white font-bold text-xs rounded-xl">Start</button>
+                    
+                    <div class="space-y-2.5 mt-1">
+                        <h3 class="font-bold text-white text-base pr-8 leading-tight">${tmpl.name}</h3>
+                        <div class="flex flex-wrap gap-1.5">
+                            ${tmpl.exercises.map(ex => `<span class="bg-neutral-950 border border-neutral-800 text-[10px] text-neutral-400 px-2 py-1 rounded-md">${ex}</span>`).join('')}
+                        </div>
                     </div>
                 `;
                 container.appendChild(card);
@@ -614,7 +687,6 @@
             });
         }
 
-        // Feature 2: Inline Interactive Adjusters Integrated Here
         function renderActiveSetRows(exName) {
             const c = document.getElementById(`set-rows-${btoa(exName).replace(/=/g, '')}`);
             c.innerHTML = '';
@@ -622,29 +694,24 @@
                 const r = document.createElement('div');
                 r.className = `grid grid-cols-[30px_minmax(0,1fr)_minmax(0,1fr)_40px] gap-2 items-center text-center py-1.5 px-1 rounded-xl transition-colors ${s.completed ? 'bg-emerald-950/20' : ''}`;
                 
-                // Construct inner HTML using custom increment/decrement wrappers
                 r.innerHTML = `
                     <span class="text-xs font-bold text-neutral-400">${i + 1}</span>
-                    
                     <div class="flex items-center justify-between bg-neutral-950 border border-neutral-800 rounded-lg overflow-hidden h-9">
                         <button onclick="adjustSetField('${exName}', ${i}, 'weight', -2.5)" class="w-8 h-full text-neutral-400 hover:text-white bg-neutral-900 border-r border-neutral-800 disabled:opacity-30 active:bg-neutral-800 transition-colors flex items-center justify-center" ${s.completed ? 'disabled' : ''}><i class="fa-solid fa-minus text-[10px]"></i></button>
                         <input type="number" step="any" value="${s.weight}" placeholder="0" onchange="updateSetData('${exName}', ${i}, 'weight', this.value)" ${s.completed ? 'disabled' : ''} class="w-full text-center text-xs font-bold text-white bg-transparent focus:outline-none">
                         <button onclick="adjustSetField('${exName}', ${i}, 'weight', 2.5)" class="w-8 h-full text-neutral-400 hover:text-white bg-neutral-900 border-l border-neutral-800 disabled:opacity-30 active:bg-neutral-800 transition-colors flex items-center justify-center" ${s.completed ? 'disabled' : ''}><i class="fa-solid fa-plus text-[10px]"></i></button>
                     </div>
-
                     <div class="flex items-center justify-between bg-neutral-950 border border-neutral-800 rounded-lg overflow-hidden h-9">
                         <button onclick="adjustSetField('${exName}', ${i}, 'reps', -1)" class="w-8 h-full text-neutral-400 hover:text-white bg-neutral-900 border-r border-neutral-800 disabled:opacity-30 active:bg-neutral-800 transition-colors flex items-center justify-center" ${s.completed ? 'disabled' : ''}><i class="fa-solid fa-minus text-[10px]"></i></button>
                         <input type="number" value="${s.reps}" placeholder="0" onchange="updateSetData('${exName}', ${i}, 'reps', this.value)" ${s.completed ? 'disabled' : ''} class="w-full text-center text-xs font-bold text-white bg-transparent focus:outline-none">
                         <button onclick="adjustSetField('${exName}', ${i}, 'reps', 1)" class="w-8 h-full text-neutral-400 hover:text-white bg-neutral-900 border-l border-neutral-800 disabled:opacity-30 active:bg-neutral-800 transition-colors flex items-center justify-center" ${s.completed ? 'disabled' : ''}><i class="fa-solid fa-plus text-[10px]"></i></button>
                     </div>
-
                     <button onclick="toggleSetCompletion('${exName}', ${i})" class="w-full h-9 flex items-center justify-center rounded-lg text-sm font-bold transition-all active:scale-90 ${s.completed ? 'bg-emerald-500 text-black' : 'bg-neutral-800 text-neutral-400'}"><i class="fa-solid ${s.completed ? 'fa-check' : 'fa-circle-notch'}"></i></button>
                 `;
                 c.appendChild(r);
             });
         }
 
-        // Logic for Interactive Increment/Decrement Buttons
         function adjustSetField(exName, index, field, amount) {
             const setObj = appState.currentActiveWorkout.exercises[exName][index];
             if (setObj.completed) return; 
@@ -653,8 +720,6 @@
             let newVal = currentVal + amount;
             
             if (newVal < 0) newVal = 0;
-            
-            // Round to 2 decimal places to prevent float precision bugs
             newVal = Math.round(newVal * 100) / 100;
             
             setObj[field] = newVal;
@@ -839,6 +904,7 @@
             if (appState.restDays.includes(d)) appState.restDays = appState.restDays.filter(x => x !== d);
             else appState.restDays.push(d);
             saveToLocalStorage(); renderRestDaysConfigTab();
+            renderDashboard(); // Update dashboard due dates dynamically
         }
 
         // --- TAB 5: PROFILE, BODYWEIGHT & DATA MANAGEMENT ---
@@ -998,7 +1064,7 @@
             });
         }
 
-        // Feature 1: Export & Import Engine
+        // Export & Import Engine
         function exportData() {
             try {
                 const dataStr = JSON.stringify(appState, null, 2);
@@ -1024,12 +1090,11 @@
             reader.onload = function(e) {
                 try {
                     const importedState = JSON.parse(e.target.result);
-                    // Basic validation to ensure it's a valid app state file
                     if (importedState && typeof importedState === 'object' && (importedState.templates || importedState.history)) {
                         appState = { ...appState, ...importedState };
                         saveToLocalStorage();
                         alert("Data imported successfully! The app will now reload.");
-                        location.reload(); // Reload to cleanly reset UI states
+                        location.reload(); 
                     } else {
                         alert("Invalid backup file format. Missing core data arrays.");
                     }
@@ -1038,7 +1103,6 @@
                 }
             };
             reader.readAsText(file);
-            // Reset the input so the same file can be selected again if needed
             event.target.value = '';
         }
 
